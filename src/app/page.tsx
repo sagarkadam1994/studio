@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Newspaper, History, Calendar, Clock } from "lucide-react";
+import Confetti from "react-confetti";
 
 import { ScriptForm, type ScriptFormData } from "@/components/script-form";
 import { ScriptOutput } from "@/components/script-output";
@@ -35,6 +36,7 @@ export default function Home() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const { toast } = useToast();
 
@@ -80,6 +82,7 @@ export default function Home() {
   const handleGenerate = async (data: ScriptFormData) => {
     setIsLoading(true);
     setOutput(null);
+    setShowConfetti(false);
 
     try {
       const result = await generateScriptAndHeadlinesAction({
@@ -94,8 +97,7 @@ export default function Home() {
       } else if (result.data) {
         setOutput(result.data);
         addToHistory(data, result.data);
-        const audio = new Audio('https://actions.google.com/sounds/v1/events/success.ogg');
-        audio.play().catch(error => console.error("Audio playback failed:", error));
+        setShowConfetti(true);
       }
     } catch (e) {
       toast({
@@ -142,6 +144,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {showConfetti && <Confetti recycle={false} onConfettiComplete={() => setShowConfetti(false)} />}
       <div className="container mx-auto px-4 py-8 flex-grow">
         <header className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
