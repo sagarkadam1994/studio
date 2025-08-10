@@ -27,8 +27,6 @@ export default function Home() {
     try {
       const result = await generateScriptAndHeadlinesAction({
         originalScript: data.script,
-        reporterName: data.reporterName,
-        location: data.location,
       });
       if (result.error) {
         toast({

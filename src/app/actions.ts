@@ -1,9 +1,6 @@
 'use server';
 
 import {
-  generateNewsHeadlines,
-} from '@/ai/flows/generate-news-headlines';
-import {
   rewriteNewsScript,
   type RewriteNewsScriptInput,
 } from '@/ai/flows/rewrite-news-script';
@@ -12,11 +9,10 @@ export async function generateScriptAndHeadlinesAction(
   input: RewriteNewsScriptInput
 ) {
   try {
-    const { rewrittenScript, reporterName, location } = await rewriteNewsScript(input);
+    const { rewrittenScript, headlines, reporterName, location } = await rewriteNewsScript(input);
     if (!rewrittenScript) {
       throw new Error('स्क्रिप्ट पुन्हा लिहिण्यात अयशस्वी.');
     }
-    const { headlines } = await generateNewsHeadlines({ rewrittenScript });
 
     return { data: { rewrittenScript, headlines, reporterName, location } };
   } catch (error) {

@@ -13,19 +13,26 @@ import {z} from 'genkit';
 
 const RewriteNewsScriptInputSchema = z.object({
   originalScript: z.string().describe('The original Marathi news script to be rewritten.'),
-  reporterName: z.string().describe("The reporter's name."),
-  location: z.string().describe('The location of the news.'),
 });
 export type RewriteNewsScriptInput = z.infer<typeof RewriteNewsScriptInputSchema>;
 
 const RewriteNewsScriptOutputSchema = z.object({
-  rewrittenScript: z.string().describe('The professionally rewritten and optimized Marathi news script.'),
+  rewrittenScript: z
+    .string()
+    .describe('The professionally rewritten and optimized Marathi news script.'),
   reporterName: z.string().describe("The reporter's name."),
   location: z.string().describe('The location of the news.'),
+  headlines: z
+    .array(z.string())
+    .describe('An array of generated news headlines.'),
 });
-export type RewriteNewsScriptOutput = z.infer<typeof RewriteNewsScriptOutputSchema>;
+export type RewriteNewsScriptOutput = z.infer<
+  typeof RewriteNewsScriptOutputSchema
+>;
 
-export async function rewriteNewsScript(input: RewriteNewsScriptInput): Promise<RewriteNewsScriptOutput> {
+export async function rewriteNewsScript(
+  input: RewriteNewsScriptInput
+): Promise<RewriteNewsScriptOutput> {
   return rewriteNewsScriptFlow(input);
 }
 
@@ -33,17 +40,21 @@ const prompt = ai.definePrompt({
   name: 'rewriteNewsScriptPrompt',
   input: {schema: RewriteNewsScriptInputSchema},
   output: {schema: RewriteNewsScriptOutputSchema},
-  prompt: `You are a professional news editor specializing in rewriting Marathi news scripts for news anchors.
+  prompt: `You are a professional Marathi news editor.
+You will receive ONLY the original Marathi news script as input.
 
-You will receive an original Marathi news script and your task is to rewrite it into a professionally optimized version that is between 100 and 150 words.
+Your job:
 
-The reporter's name is {{reporterName}} and the location is {{location}}. Include these in the output.
-
-Pay close attention to grammar and readability, ensuring the rewritten script is suitable for news anchors.
+1. Rewrite the script in 100–150 Marathi words.
+2. Extract the reporter's name and location from the script. If the reporter's name is not available, leave it blank. If the location is unknown, mark it as '[location inferred]'.
+3. Generate 4–5 Ticker Headlines (each 5–6 Marathi words, important points only).
+4. The rewritten script must:
+   * Have no grammar mistakes.
+   * Be clear, anchor-friendly, and attractive for listeners.
+   * Follow YouTube content rules (no hate speech, no abusive words, no personal addresses, no copyright violation).
 
 Original Script: {{{originalScript}}}
-
-Rewritten Script:`,
+`,
 });
 
 const rewriteNewsScriptFlow = ai.defineFlow(
@@ -54,11 +65,18 @@ const rewriteNewsScriptFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    const rewrittenScript = output?.rewrittenScript?.replace(/Reporter/g, 'प्रतिनिधी') ?? '';
+
+    const rewrittenScript =
+      output?.rewrittenScript?.replace(/Reporter/g, 'प्रतिनिधी') ?? '';
+    const headlines = output?.headlines ?? [];
+    const reporterName = output?.reporterName ?? '';
+    const location = output?.location ?? '';
+
     return {
       rewrittenScript,
-      reporterName: output?.reporterName ?? input.reporterName,
-      location: output?.location ?? input.location,
+      headlines,
+      reporterName,
+      location,
     };
   }
 );
