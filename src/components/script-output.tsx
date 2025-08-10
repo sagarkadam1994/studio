@@ -127,22 +127,18 @@ export function ScriptOutput({
                   <Tags className="h-5 w-5 text-primary" />
                   <span>Tags</span>
                 </h4>
-                <div className="flex flex-wrap gap-2 pl-4">
-                  {output.youtube.tags.map((tag, index) => (
-                    <Badge key={index} variant="outline">{tag}</Badge>
-                  ))}
-                </div>
+                <p className="text-base pl-4">
+                  {output.youtube.tags.join(", ")}
+                </p>
               </div>
               <div>
                 <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
                   <Hash className="h-5 w-5 text-primary" />
                   <span>Hashtags</span>
                 </h4>
-                <div className="flex flex-wrap gap-2 pl-4">
-                  {output.youtube.hashtags.map((tag, index) => (
-                    <Badge key={index} variant="outline">#{tag}</Badge>
-                  ))}
-                </div>
+                <p className="text-base pl-4">
+                  {output.youtube.hashtags.map(tag => `#${tag}`).join(" ")}
+                </p>
               </div>
             </div>
           </TabsContent>
