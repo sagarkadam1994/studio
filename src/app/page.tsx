@@ -51,8 +51,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="container mx-auto px-4 py-8 flex-grow">
         <header className="flex items-center gap-4 mb-8">
           <div className="p-2 bg-primary/10 rounded-lg">
             <Newspaper className="h-10 w-10 text-primary" />
@@ -79,6 +79,13 @@ export default function Home() {
           </div>
         </main>
       </div>
+       <footer className="bg-background border-t border-border mt-8">
+        <div className="container mx-auto py-4 px-4 text-center text-muted-foreground text-sm">
+          <p>
+            क्रिएटर - <strong>सागर कदम</strong> | 'माझे कोकण न्यूज चॅनेल' साठी बनवले आहे.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
