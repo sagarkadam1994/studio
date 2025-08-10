@@ -7,11 +7,12 @@ import { ScriptForm, type ScriptFormData } from "@/components/script-form";
 import { ScriptOutput } from "@/components/script-output";
 import { generateScriptAndHeadlinesAction } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
 
 export interface OutputData {
   rewrittenScript: string;
   headlines: string[];
+  reporterName: string;
+  location: string;
 }
 
 export default function Home() {
@@ -26,6 +27,8 @@ export default function Home() {
     try {
       const result = await generateScriptAndHeadlinesAction({
         originalScript: data.script,
+        reporterName: data.reporterName,
+        location: data.location,
       });
       if (result.error) {
         toast({

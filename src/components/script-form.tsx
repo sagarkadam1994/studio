@@ -23,8 +23,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
+  reporterName: z.string().min(1, { message: "कृपया प्रतिनिधीचे नाव टाका." }),
+  location: z.string().min(1, { message: "कृपया ठिकाण टाका." }),
   script: z
     .string()
     .min(50, { message: "कृपया किमान ५० अक्षरांची स्क्रिप्ट टाका." }),
@@ -41,6 +44,8 @@ export function ScriptForm({ onSubmit, isLoading }: ScriptFormProps) {
   const form = useForm<ScriptFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      reporterName: "",
+      location: "",
       script: "",
     },
   });
@@ -61,6 +66,34 @@ export function ScriptForm({ onSubmit, isLoading }: ScriptFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="reporterName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">प्रतिनिधीचे नाव</FormLabel>
+                    <FormControl>
+                      <Input placeholder="उदा. आकाश" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">ठिकाण</FormLabel>
+                    <FormControl>
+                      <Input placeholder="उदा. पुणे" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="script"

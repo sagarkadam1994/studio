@@ -13,11 +13,15 @@ import {z} from 'genkit';
 
 const RewriteNewsScriptInputSchema = z.object({
   originalScript: z.string().describe('The original Marathi news script to be rewritten.'),
+  reporterName: z.string().describe("The reporter's name."),
+  location: z.string().describe('The location of the news.'),
 });
 export type RewriteNewsScriptInput = z.infer<typeof RewriteNewsScriptInputSchema>;
 
 const RewriteNewsScriptOutputSchema = z.object({
   rewrittenScript: z.string().describe('The professionally rewritten and optimized Marathi news script.'),
+  reporterName: z.string().describe("The reporter's name."),
+  location: z.string().describe('The location of the news.'),
 });
 export type RewriteNewsScriptOutput = z.infer<typeof RewriteNewsScriptOutputSchema>;
 
@@ -33,11 +37,13 @@ const prompt = ai.definePrompt({
 
 You will receive an original Marathi news script and your task is to rewrite it into a professionally optimized version that is between 100 and 150 words.
 
+The reporter's name is {{reporterName}} and the location is {{location}}. Include these in the output.
+
 Pay close attention to grammar and readability, ensuring the rewritten script is suitable for news anchors.
 
 Original Script: {{{originalScript}}}
 
-Rewritten Script:`, // Removed {{shabdavali_rupantarana}}
+Rewritten Script:`,
 });
 
 const rewriteNewsScriptFlow = ai.defineFlow(
@@ -48,9 +54,11 @@ const rewriteNewsScriptFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    // TODO: Implement शब्दावली रूपांतरण (Shabdavali Rupantarana) i.e. replace 'Reporter' with 'प्रतिनिधी' in the script
-    // This requires post-processing the output.
     const rewrittenScript = output?.rewrittenScript?.replace(/Reporter/g, 'प्रतिनिधी') ?? '';
-    return {rewrittenScript};
+    return {
+      rewrittenScript,
+      reporterName: output?.reporterName ?? input.reporterName,
+      location: output?.location ?? input.location,
+    };
   }
 );
