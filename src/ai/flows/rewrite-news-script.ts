@@ -61,6 +61,8 @@ const GenerateWebsiteArticleOutputSchema = z.object({
     .describe(
       'A 400-600 word SEO-friendly article in a mix of Marathi and English.'
     ),
+  tags: z.array(z.string()).describe('An array of relevant tags for the article.'),
+  category: z.string().describe('A relevant category for the article.'),
 });
 
 const RewriteNewsScriptOutputSchema = z.object({

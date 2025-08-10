@@ -3,7 +3,9 @@
 import {
   rewriteNewsScript,
   type RewriteNewsScriptInput,
+  type RewriteNewsScriptOutput,
 } from '@/ai/flows/rewrite-news-script';
+import { createWebsitePost } from '@/ai/flows/create-website-post';
 
 export async function generateScriptAndHeadlinesAction(
   input: RewriteNewsScriptInput
@@ -19,6 +21,18 @@ export async function generateScriptAndHeadlinesAction(
     console.error(error);
     return {
       error: error instanceof Error ? error.message : 'एक अज्ञात त्रुटी आली.',
+    };
+  }
+}
+
+export async function postToWebsiteAction(websiteData: RewriteNewsScriptOutput['website']) {
+  try {
+    const result = await createWebsitePost(websiteData);
+    return { data: result };
+  } catch (error) {
+    console.error(error);
+    return {
+      error: error instanceof Error ? error.message : 'वेबसाइटवर पोस्ट करण्यात अयशस्वी.',
     };
   }
 }

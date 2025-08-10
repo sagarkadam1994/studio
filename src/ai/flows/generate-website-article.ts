@@ -32,6 +32,8 @@ const GenerateWebsiteArticleOutputSchema = z.object({
     .describe(
       'A 400-600 word SEO-friendly article in a mix of Marathi and English.'
     ),
+  tags: z.array(z.string()).describe('An array of relevant tags for the article.'),
+  category: z.string().describe('A relevant category for the article.'),
 });
 export type GenerateWebsiteArticleOutput = z.infer<
   typeof GenerateWebsiteArticleOutputSchema
@@ -56,6 +58,8 @@ Your task is to provide:
 1.  **Title:** An SEO-friendly title in Marathi.
 2.  **Permalink:** A URL-friendly permalink (slug) based on the title. It should be in English, lowercase, and use hyphens instead of spaces.
 3.  **Article:** A detailed, SEO-friendly article of 400-600 words. It should be primarily in Marathi but include relevant English keywords to improve search engine ranking. The article should be well-structured and easy to read.
+4.  **Tags:** A list of relevant tags for the article.
+5.  **Category:** A relevant category for the article.
 `,
 });
 

@@ -1,26 +1,73 @@
-"use client";
+'use client';
 
-import { FileText, Sparkles, CheckCircle2, User, MapPin, Youtube, ThumbsUp, Tags, FileSignature, Hash, Globe, Link } from "lucide-react";
-import { type OutputData } from "@/app/page";
+import {
+  FileText,
+  Sparkles,
+  CheckCircle2,
+  User,
+  MapPin,
+  Youtube,
+  ThumbsUp,
+  Tags,
+  FileSignature,
+  Hash,
+  Globe,
+  Link,
+  UploadCloud,
+  Loader2,
+} from 'lucide-react';
+import { type OutputData } from '@/app/page';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "./ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from './ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from './ui/button';
+import { useState } from 'react';
+import { postToWebsiteAction } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 interface ScriptOutputProps {
   output: OutputData | null;
   isLoading: boolean;
 }
 
-export function ScriptOutput({
-  output,
-  isLoading,
-}: ScriptOutputProps) {
+export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
+  const [isPosting, setIsPosting] = useState(false);
+  const { toast } = useToast();
+
+  const handlePostToWebsite = async () => {
+    if (!output) return;
+    setIsPosting(true);
+    try {
+      const result = await postToWebsiteAction(output.website);
+      if (result.error) {
+        toast({
+          variant: 'destructive',
+          title: 'त्रुटी',
+          description: result.error,
+        });
+      } else {
+        toast({
+          title: 'यशस्वी',
+          description: 'तुमचा लेख वेबसाइटवर यशस्वीरित्या पोस्ट झाला आहे.',
+        });
+      }
+    } catch (e) {
+      toast({
+        variant: 'destructive',
+        title: 'त्रुटी',
+        description: 'काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.',
+      });
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
   if (isLoading) {
     return <OutputSkeleton />;
   }
@@ -29,7 +76,9 @@ export function ScriptOutput({
     return (
       <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-xl h-full min-h-[400px]">
         <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-        <h3 className="text-xl font-headline font-semibold text-foreground">आउटपुट</h3>
+        <h3 className="text-xl font-headline font-semibold text-foreground">
+          आउटपुट
+        </h3>
         <p className="text-muted-foreground">तुमचा निकाल येथे दिसेल.</p>
       </div>
     );
@@ -59,14 +108,24 @@ export function ScriptOutput({
           <TabsContent value="script" className="pt-4">
             <div className="space-y-4">
               <div className="flex flex-wrap gap-4 text-sm">
-                  <Badge variant="secondary" className="flex items-center gap-2 py-1 px-3">
-                      <User className="h-4 w-4" />
-                      <span>प्रतिनिधी: <strong>{output.reporterName}</strong></span>
-                  </Badge>
-                  <Badge variant="secondary" className="flex items-center gap-2 py-1 px-3">
-                      <MapPin className="h-4 w-4" />
-                      <span>ठिकाण: <strong>{output.location}</strong></span>
-                  </Badge>
+                <Badge
+                  variant="secondary"
+                  className="flex items-center gap-2 py-1 px-3"
+                >
+                  <User className="h-4 w-4" />
+                  <span>
+                    प्रतिनिधी: <strong>{output.reporterName}</strong>
+                  </span>
+                </Badge>
+                <Badge
+                  variant="secondary"
+                  className="flex items-center gap-2 py-1 px-3"
+                >
+                  <MapPin className="h-4 w-4" />
+                  <span>
+                    ठिकाण: <strong>{output.location}</strong>
+                  </span>
+                </Badge>
               </div>
               <div>
                 <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mt-4 mb-2">
@@ -107,7 +166,7 @@ export function ScriptOutput({
                   {output.youtube.youtubeTitle}
                 </p>
               </div>
-               <div>
+              <div>
                 <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
                   <ThumbsUp className="h-5 w-5 text-primary" />
                   <span>Thumbnail साठी वाक्य</span>
@@ -131,7 +190,7 @@ export function ScriptOutput({
                   <span>Tags</span>
                 </h4>
                 <p className="text-base pl-4">
-                  {output.youtube.tags.join(", ")}
+                  {output.youtube.tags.join(', ')}
                 </p>
               </div>
               <div>
@@ -140,12 +199,12 @@ export function ScriptOutput({
                   <span>Hashtags</span>
                 </h4>
                 <p className="text-base pl-4">
-                  {output.youtube.hashtags.join(" ")}
+                  {output.youtube.hashtags.join(' ')}
                 </p>
               </div>
             </div>
           </TabsContent>
-           <TabsContent value="website" className="pt-4">
+          <TabsContent value="website" className="pt-4">
             <div className="space-y-4">
               <div>
                 <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
@@ -165,6 +224,24 @@ export function ScriptOutput({
                   {output.website.permalink}
                 </p>
               </div>
+               <div>
+                <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
+                  <Tags className="h-5 w-5 text-primary" />
+                  <span>Tags</span>
+                </h4>
+                <p className="text-base pl-4">
+                  {output.website.tags.join(', ')}
+                </p>
+              </div>
+               <div>
+                <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
+                  <Globe className="h-5 w-5 text-primary" />
+                  <span>Category</span>
+                </h4>
+                <p className="text-base pl-4">
+                  {output.website.category}
+                </p>
+              </div>
               <div>
                 <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
                   <FileText className="h-5 w-5 text-primary" />
@@ -174,6 +251,18 @@ export function ScriptOutput({
                   {output.website.article}
                 </p>
               </div>
+              <Button
+                onClick={handlePostToWebsite}
+                disabled={isPosting}
+                className="w-full mt-4"
+              >
+                {isPosting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <UploadCloud className="mr-2 h-4 w-4" />
+                )}
+                Post to Website
+              </Button>
             </div>
           </TabsContent>
         </Tabs>
@@ -183,36 +272,36 @@ export function ScriptOutput({
 }
 
 function OutputSkeleton() {
-    return (
-        <div className="space-y-8 animate-pulse">
-            <Card className="shadow-lg">
-                <CardHeader>
-                    <Skeleton className="h-7 w-1/2" />
-                </CardHeader>
-                <CardContent>
-                  <div className="grid w-full grid-cols-3 gap-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                  <div className="pt-4 space-y-4">
-                      <div className="flex gap-4">
-                          <Skeleton className="h-8 w-1/3" />
-                          <Skeleton className="h-8 w-1/3" />
-                      </div>
-                      <Skeleton className="h-7 w-1/3 mt-4" />
-                      <Skeleton className="h-5 w-full" />
-                      <Skeleton className="h-5 w-full" />
-                      <Skeleton className="h-5 w-5/6" />
+  return (
+    <div className="space-y-8 animate-pulse">
+      <Card className="shadow-lg">
+        <CardHeader>
+          <Skeleton className="h-7 w-1/2" />
+        </CardHeader>
+        <CardContent>
+          <div className="grid w-full grid-cols-3 gap-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="pt-4 space-y-4">
+            <div className="flex gap-4">
+              <Skeleton className="h-8 w-1/3" />
+              <Skeleton className="h-8 w-1/3" />
+            </div>
+            <Skeleton className="h-7 w-1/3 mt-4" />
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-5/6" />
 
-                      <Skeleton className="h-7 w-1/3 mt-4" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-5/6" />
-                      <Skeleton className="h-4 w-3/4" />
-                  </div>
-                </CardContent>
-            </Card>
-        </div>
-    )
+            <Skeleton className="h-7 w-1/3 mt-4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
