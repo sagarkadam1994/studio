@@ -36,7 +36,7 @@ const generateImageFlow = ai.defineFlow(
     try {
       const { media } = await ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: `A professional, realistic, high-quality photograph related to the news headline: "${input.prompt}". The image must NOT contain any text, words, letters, or numbers. It should be a clean photograph suitable for a news website, without any text overlay.`,
+        prompt: `A professional, realistic, high-quality photograph related to the news headline: "${input.prompt}". The image must be purely photographic and must NOT contain any text, writing, letters, or numbers. It should be a clean photograph suitable for a news website, without any text overlay.`,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
