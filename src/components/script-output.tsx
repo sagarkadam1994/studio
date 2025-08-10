@@ -13,9 +13,9 @@ import {
   Hash,
   Globe,
   Link,
-  UploadCloud,
-  Loader2,
+  Image as ImageIcon,
 } from 'lucide-react';
+import Image from 'next/image';
 import { type OutputData } from '@/app/page';
 import {
   Card,
@@ -26,10 +26,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from './ui/button';
-import { useState } from 'react';
-import { postToWebsiteAction } from '@/app/actions';
-import { useToast } from '@/hooks/use-toast';
 
 interface ScriptOutputProps {
   output: OutputData | null;
@@ -37,36 +33,6 @@ interface ScriptOutputProps {
 }
 
 export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
-  const [isPosting, setIsPosting] = useState(false);
-  const { toast } = useToast();
-
-  const handlePostToWebsite = async () => {
-    if (!output) return;
-    setIsPosting(true);
-    try {
-      const result = await postToWebsiteAction(output.website);
-      if (result.error) {
-        toast({
-          variant: 'destructive',
-          title: 'त्रुटी',
-          description: result.error,
-        });
-      } else {
-        toast({
-          title: 'यशस्वी',
-          description: 'तुमचा लेख वेबसाइटवर यशस्वीरित्या पोस्ट झाला आहे.',
-        });
-      }
-    } catch (e) {
-      toast({
-        variant: 'destructive',
-        title: 'त्रुटी',
-        description: 'काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.',
-      });
-    } finally {
-      setIsPosting(false);
-    }
-  };
 
   if (isLoading) {
     return <OutputSkeleton />;
@@ -206,6 +172,22 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
           </TabsContent>
           <TabsContent value="website" className="pt-4">
             <div className="space-y-4">
+               {output.website.imageUrl && (
+                <div>
+                   <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
+                    <ImageIcon className="h-5 w-5 text-primary" />
+                    <span>लेखासाठी इमेज</span>
+                  </h4>
+                  <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
+                    <Image
+                      src={output.website.imageUrl}
+                      alt={output.website.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+              )}
               <div>
                 <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
                   <FileSignature className="h-5 w-5 text-primary" />
@@ -251,18 +233,6 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
                   {output.website.article}
                 </p>
               </div>
-              <Button
-                onClick={handlePostToWebsite}
-                disabled={isPosting}
-                className="w-full mt-4"
-              >
-                {isPosting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <UploadCloud className="mr-2 h-4 w-4" />
-                )}
-                Post to Website
-              </Button>
             </div>
           </TabsContent>
         </Tabs>

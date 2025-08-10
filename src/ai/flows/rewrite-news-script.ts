@@ -16,6 +16,7 @@ import {
 import {
   generateWebsiteArticle,
 } from './generate-website-article';
+import { generateImage } from './generate-image';
 
 const RewriteNewsScriptInputSchema = z.object({
   originalScript: z
@@ -63,6 +64,7 @@ const GenerateWebsiteArticleOutputSchema = z.object({
     ),
   tags: z.array(z.string()).describe('An array of relevant tags for the article.'),
   category: z.string().describe('A relevant category for the article.'),
+  imageUrl: z.string().optional().describe('URL of a relevant image for the article.'),
 });
 
 const RewriteNewsScriptOutputSchema = z.object({
@@ -140,6 +142,9 @@ const rewriteNewsScriptFlow = ai.defineFlow(
       generateYoutubeMetadata({ rewrittenScript }),
       generateWebsiteArticle({ rewrittenScript })
     ]);
+
+    const image = await generateImage({ prompt: website.title });
+    website.imageUrl = image.imageUrl;
 
     return {
       rewrittenScript,

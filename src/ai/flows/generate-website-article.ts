@@ -34,6 +34,7 @@ const GenerateWebsiteArticleOutputSchema = z.object({
     ),
   tags: z.array(z.string()).describe('An array of relevant tags for the article.'),
   category: z.string().describe('A relevant category for the article.'),
+  imageUrl: z.string().optional().describe('URL of a relevant image for the article.'),
 });
 export type GenerateWebsiteArticleOutput = z.infer<
   typeof GenerateWebsiteArticleOutputSchema
