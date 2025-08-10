@@ -197,7 +197,7 @@ export default function Home() {
        <footer className="bg-background border-t border-border mt-8">
         <div className="container mx-auto py-4 px-4 text-center text-muted-foreground text-sm">
           <p>
-            Creator - <strong>Sagar Kadam</strong> | Made for 'Mazhe Kokan News Channel'.
+            Creator - <strong>Sagar Kadam</strong> | Made for 'Maze Kokan News Channel'.
           </p>
         </div>
       </footer>
