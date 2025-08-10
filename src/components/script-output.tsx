@@ -137,7 +137,7 @@ export function ScriptOutput({
                   <span>Hashtags</span>
                 </h4>
                 <p className="text-base pl-4">
-                  {output.youtube.hashtags.map(tag => `#${tag}`).join(" ")}
+                  #{output.youtube.hashtags.join(" #")}
                 </p>
               </div>
             </div>
