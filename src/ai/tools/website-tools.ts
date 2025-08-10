@@ -28,48 +28,52 @@ async function getOrCreateTermId(
   const authHeader = getAuthHeader();
 
   // Search for existing term
-  const searchResponse = await fetch(
-    `${WP_API_BASE}/${taxonomy}?search=${encodeURIComponent(term)}`,
-    {
-      headers: {Authorization: authHeader},
-    }
-  );
+  try {
+    const searchResponse = await fetch(
+      `${WP_API_BASE}/${taxonomy}?search=${encodeURIComponent(term)}&_fields=id,name`,
+      {
+        headers: {Authorization: authHeader},
+      }
+    );
 
-  if (!searchResponse.ok) {
-    console.error(
-      `Failed to search for ${taxonomy}:`,
-      await searchResponse.text()
-    );
-    // Fallback to trying to create it, maybe it just doesn't exist
-  } else {
-    const existingTerms: any[] = await searchResponse.json();
-    const exactMatch = existingTerms.find(
-      t => t.name.toLowerCase() === term.toLowerCase()
-    );
-    if (exactMatch) {
-      return exactMatch.id;
+    if (searchResponse.ok) {
+      const existingTerms: any[] = await searchResponse.json();
+      const exactMatch = existingTerms.find(
+        t => t.name.toLowerCase() === term.toLowerCase()
+      );
+      if (exactMatch) {
+        return exactMatch.id;
+      }
     }
+  } catch (searchError) {
+      console.error(`Error searching for ${taxonomy} '${term}':`, searchError);
+      // Fall through to create, as search might fail for various reasons.
   }
 
 
   // If not found, create it
-  const createResponse = await fetch(`${WP_API_BASE}/${taxonomy}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: authHeader,
-    },
-    body: JSON.stringify({name: term}),
-  });
+  try {
+    const createResponse = await fetch(`${WP_API_BASE}/${taxonomy}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: authHeader,
+      },
+      body: JSON.stringify({name: term}),
+    });
 
-  if (!createResponse.ok) {
-    const errorBody = await createResponse.text();
-    console.error(`Failed to create ${taxonomy} '${term}':`, errorBody);
-    throw new Error(`Could not create ${taxonomy}: ${term}`);
+    if (!createResponse.ok) {
+      const errorBody = await createResponse.text();
+      console.error(`Failed to create ${taxonomy} '${term}':`, errorBody);
+      throw new Error(`Could not create ${taxonomy}: ${term}. Response: ${errorBody}`);
+    }
+
+    const newTerm: any = await createResponse.json();
+    return newTerm.id;
+  } catch(createError) {
+    console.error(`Fatal error creating ${taxonomy} '${term}':`, createError);
+    throw createError;
   }
-
-  const newTerm: any = await createResponse.json();
-  return newTerm.id;
 }
 
 export const postToWebsiteTool = ai.defineTool(
