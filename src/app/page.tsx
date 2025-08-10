@@ -49,6 +49,7 @@ export default function Home() {
     }
 
     // Set date/time on client to avoid hydration mismatch
+    setCurrentDateTime(new Date());
     const timer = setInterval(() => {
       setCurrentDateTime(new Date());
     }, 1000);
