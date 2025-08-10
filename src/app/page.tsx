@@ -7,6 +7,7 @@ import { ScriptForm, type ScriptFormData } from "@/components/script-form";
 import { ScriptOutput } from "@/components/script-output";
 import { generateScriptAndHeadlinesAction } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
+import { GenerateYoutubeMetadataOutput } from "@/ai/flows/generate-youtube-metadata";
 
 export interface OutputData {
   rewrittenScript: string;
@@ -14,6 +15,7 @@ export interface OutputData {
   reporterName: string;
   location: string;
   wordCount: number;
+  youtube: GenerateYoutubeMetadataOutput;
 }
 
 export default function Home() {

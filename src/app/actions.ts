@@ -9,12 +9,12 @@ export async function generateScriptAndHeadlinesAction(
   input: RewriteNewsScriptInput
 ) {
   try {
-    const { rewrittenScript, headlines, reporterName, location, wordCount } = await rewriteNewsScript(input);
+    const { rewrittenScript, headlines, reporterName, location, wordCount, youtube } = await rewriteNewsScript(input);
     if (!rewrittenScript) {
       throw new Error('स्क्रिप्ट पुन्हा लिहिण्यात अयशस्वी.');
     }
 
-    return { data: { rewrittenScript, headlines, reporterName, location, wordCount } };
+    return { data: { rewrittenScript, headlines, reporterName, location, wordCount, youtube } };
   } catch (error) {
     console.error(error);
     return {

@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/rewrite-news-script.ts';
 import '@/ai/flows/generate-news-headlines.ts';
+import '@/ai/flows/generate-youtube-metadata.ts';

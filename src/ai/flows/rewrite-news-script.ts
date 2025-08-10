@@ -10,11 +10,36 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {
+  generateYoutubeMetadata,
+  type GenerateYoutubeMetadataOutput,
+} from './generate-youtube-metadata';
 
 const RewriteNewsScriptInputSchema = z.object({
-  originalScript: z.string().describe('The original Marathi news script to be rewritten.'),
+  originalScript: z
+    .string()
+    .describe('The original Marathi news script to be rewritten.'),
 });
-export type RewriteNewsScriptInput = z.infer<typeof RewriteNewsScriptInputSchema>;
+export type RewriteNewsScriptInput = z.infer<
+  typeof RewriteNewsScriptInputSchema
+>;
+
+// Define the schema here since it cannot be imported from a 'use server' file.
+const GenerateYoutubeMetadataOutputSchema = z.object({
+  youtubeTitle: z
+    .string()
+    .describe(
+      'A YouTube title of around 100 characters, optimized for virality based on the YouTube algorithm.'
+    ),
+  thumbnailText: z
+    .string()
+    .describe(
+      'Two attractive sentences for the thumbnail to entice viewers to click.'
+    ),
+  description: z.string().describe('A YouTube video description.'),
+  tags: z.array(z.string()).describe('An array of YouTube video tags.'),
+});
+
 
 const RewriteNewsScriptOutputSchema = z.object({
   rewrittenScript: z
@@ -26,6 +51,7 @@ const RewriteNewsScriptOutputSchema = z.object({
     .array(z.string())
     .describe('An array of generated news headlines.'),
   wordCount: z.number().describe('The word count of the rewritten script.'),
+  youtube: GenerateYoutubeMetadataOutputSchema,
 });
 export type RewriteNewsScriptOutput = z.infer<
   typeof RewriteNewsScriptOutputSchema
@@ -40,7 +66,13 @@ export async function rewriteNewsScript(
 const prompt = ai.definePrompt({
   name: 'rewriteNewsScriptPrompt',
   input: {schema: RewriteNewsScriptInputSchema},
-  output: {schema: RewriteNewsScriptOutputSchema},
+  output: {schema: z.object({
+    rewrittenScript: z.string(),
+    reporterName: z.string(),
+    location: z.string(),
+    headlines: z.array(z.string()),
+    wordCount: z.number(),
+  })},
   prompt: `You are a professional Marathi news editor.
 You will receive ONLY the original Marathi news script as input.
 
@@ -79,12 +111,15 @@ const rewriteNewsScriptFlow = ai.defineFlow(
     const location = output?.location ?? '';
     const wordCount = output?.wordCount ?? 0;
 
+    const youtube = await generateYoutubeMetadata({ rewrittenScript });
+
     return {
       rewrittenScript,
       headlines,
       reporterName,
       location,
       wordCount,
+      youtube,
     };
   }
 );
