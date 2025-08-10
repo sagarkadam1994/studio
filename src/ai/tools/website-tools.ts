@@ -24,8 +24,9 @@ const getAuthHeader = () => {
 async function getOrCreateTermId(
   term: string,
   taxonomy: 'categories' | 'tags'
-): Promise<number> {
+): Promise<number | null> {
   const authHeader = getAuthHeader();
+  const DEFAULT_CATEGORY_ID = 1; // 'Uncategorized' is typically ID 1
 
   // Search for existing term
   try {
@@ -47,33 +48,19 @@ async function getOrCreateTermId(
     }
   } catch (searchError) {
       console.error(`Error searching for ${taxonomy} '${term}':`, searchError);
-      // Fall through to create, as search might fail for various reasons.
+      // Fall through to the default behavior
   }
 
-
-  // If not found, create it
-  try {
-    const createResponse = await fetch(`${WP_API_BASE}/${taxonomy}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: authHeader,
-      },
-      body: JSON.stringify({name: term}),
-    });
-
-    if (!createResponse.ok) {
-      const errorBody = await createResponse.text();
-      console.error(`Failed to create ${taxonomy} '${term}':`, errorBody);
-      throw new Error(`Could not create ${taxonomy}: ${term}. Response: ${errorBody}`);
-    }
-
-    const newTerm: any = await createResponse.json();
-    return newTerm.id;
-  } catch(createError) {
-    console.error(`Fatal error creating ${taxonomy} '${term}':`, createError);
-    throw createError;
+  // If term not found, for categories, use default. For tags, skip.
+  if (taxonomy === 'categories') {
+    console.log(`Category '${term}' not found. Using default category.`);
+    return DEFAULT_CATEGORY_ID;
   }
+  
+  // For tags that don't exist, we will not create them to avoid issues.
+  // We'll just skip them.
+  console.log(`Tag '${term}' not found. Skipping.`);
+  return null;
 }
 
 export const postToWebsiteTool = ai.defineTool(
@@ -108,18 +95,23 @@ export const postToWebsiteTool = ai.defineTool(
 
       // Get or create category and tag IDs
       const categoryId = await getOrCreateTermId(input.category, 'categories');
-      const tagIds = await Promise.all(
-        input.tags.map(tag => getOrCreateTermId(tag, 'tags'))
-      );
+      const tagIdPromises = input.tags.map(tag => getOrCreateTermId(tag, 'tags'));
+      const tagIds = (await Promise.all(tagIdPromises)).filter((id): id is number => id !== null);
       
-      const postData = {
+      const postData: any = {
         title: input.title,
         slug: input.permalink,
         content: input.article,
         status: 'publish', // Or 'draft'
-        categories: [categoryId],
-        tags: tagIds,
       };
+
+      if (categoryId) {
+        postData.categories = [categoryId];
+      }
+      if (tagIds.length > 0) {
+        postData.tags = tagIds;
+      }
+
 
       const response = await fetch(`${WP_API_BASE}/posts`, {
         method: 'POST',
