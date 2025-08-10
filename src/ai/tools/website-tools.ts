@@ -32,7 +32,7 @@ async function getOrCreateTermId(
   const DEFAULT_CATEGORY_ID = 1; // 'Uncategorized' is typically ID 1
 
   try {
-    // 1. Search for existing term
+    // 1. Search for existing term by name
     const searchResponse = await fetch(
       `${endpoint}?search=${encodeURIComponent(term)}&_fields=id,name`,
       {
@@ -40,17 +40,23 @@ async function getOrCreateTermId(
       }
     );
 
-    if (searchResponse.ok) {
-      const existingTerms: any[] = await searchResponse.json();
-      const exactMatch = existingTerms.find(
-        t => t.name.toLowerCase() === term.toLowerCase()
-      );
-      if (exactMatch) {
-        return exactMatch.id;
-      }
+    if (!searchResponse.ok) {
+        const errorText = await searchResponse.text();
+        console.warn(`Failed to search for ${taxonomy} '${term}'. Status: ${searchResponse.status}. Body: ${errorText}`);
+    } else {
+        const existingTerms: any[] = await searchResponse.json();
+        const exactMatch = existingTerms.find(
+            (t) => t.name.toLowerCase() === term.toLowerCase()
+        );
+        if (exactMatch) {
+            console.log(`Found existing ${taxonomy} '${term}' with ID ${exactMatch.id}.`);
+            return exactMatch.id;
+        }
     }
 
+
     // 2. If not found, create it
+    console.log(`'${term}' not found. Attempting to create it as a new ${taxonomy}.`);
     const createResponse = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -67,34 +73,28 @@ async function getOrCreateTermId(
     }
 
     const errorBody: any = await createResponse.json();
-     // If creation fails because it already exists (race condition, etc.)
-    if (errorBody.code === 'term_exists') {
-        const existingId = errorBody.data?.term_id;
-        if(existingId) {
-             console.log(`Term '${term}' already exists with ID ${existingId}. Using it.`);
-             return existingId;
-        }
+    // If creation fails because it already exists (a common race condition or search issue)
+    if (errorBody.code === 'term_exists' && errorBody.data?.term_id) {
+        const existingId = errorBody.data.term_id;
+        console.log(`Term '${term}' already exists with ID ${existingId} (detected on creation). Using it.`);
+        return existingId;
     }
     
-    console.error(`Failed to create ${taxonomy} '${term}'. Reason: ${errorBody.message}`);
+    console.error(`Failed to create ${taxonomy} '${term}'. Status: ${createResponse.status}, Reason: ${errorBody.message || 'Unknown'}`);
 
-    // 3. Fallback logic
-    if (taxonomy === 'categories') {
-        console.log(`Using default category.`);
-        return DEFAULT_CATEGORY_ID;
-    }
-    
-    // For tags, if creation fails, we skip it.
-    return null;
-
-  } catch (error) {
-    console.error(`Error processing ${taxonomy} '${term}':`, error);
-     if (taxonomy === 'categories') {
-        console.log(`Using default category due to error.`);
-        return DEFAULT_CATEGORY_ID;
-    }
-    return null;
+  } catch (error: any) {
+    console.error(`An unexpected error occurred while processing ${taxonomy} '${term}':`, error.message);
   }
+
+  // 3. Fallback logic
+  if (taxonomy === 'categories') {
+    console.log(`Using default category 'Uncategorized' as a fallback.`);
+    return DEFAULT_CATEGORY_ID;
+  }
+  
+  // For tags, if we reach here, it means we couldn't find or create it. Skip it.
+  console.log(`Skipping tag '${term}' due to processing errors.`);
+  return null;
 }
 
 export const postToWebsiteTool = ai.defineTool(
@@ -139,14 +139,9 @@ export const postToWebsiteTool = ai.defineTool(
         slug: input.permalink,
         content: input.article,
         status: 'publish', // Or 'draft'
+        categories: categoryId ? [categoryId] : [1], // Fallback to 1 if null
+        tags: tagIds,
       };
-
-      if (categoryId) {
-        postData.categories = [categoryId];
-      }
-      if (tagIds.length > 0) {
-        postData.tags = tagIds;
-      }
 
       console.log('Posting data to WordPress:', JSON.stringify(postData, null, 2));
 
@@ -160,10 +155,15 @@ export const postToWebsiteTool = ai.defineTool(
       });
 
       if (!response.ok) {
-        const errorBody = await response.json();
-        const errorMessage =
-          errorBody.message || 'An unknown error occurred while posting.';
-        console.error('WordPress API Error:', errorBody);
+        const errorText = await response.text();
+        let errorMessage = `An unknown error occurred while posting. Status: ${response.status}.`;
+        try {
+            const errorBody = JSON.parse(errorText);
+            errorMessage = errorBody.message || errorMessage;
+        } catch {
+            errorMessage = `${errorMessage} Body: ${errorText}`;
+        }
+        console.error('WordPress API Error:', errorMessage);
         return {
           success: false,
           message: `Failed to post to website: ${errorMessage}`,
