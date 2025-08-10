@@ -76,6 +76,9 @@ export function ScriptOutput({
               <p className="text-lg leading-relaxed whitespace-pre-wrap border-l-4 border-primary/50 pl-4">
                 {output.rewrittenScript}
               </p>
+              <p className="text-right text-sm text-muted-foreground mt-2">
+                Word Count: {output.wordCount}
+              </p>
             </div>
         </CardContent>
       </Card>

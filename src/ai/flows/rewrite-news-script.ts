@@ -25,6 +25,7 @@ const RewriteNewsScriptOutputSchema = z.object({
   headlines: z
     .array(z.string())
     .describe('An array of generated news headlines.'),
+  wordCount: z.number().describe('The word count of the rewritten script.'),
 });
 export type RewriteNewsScriptOutput = z.infer<
   typeof RewriteNewsScriptOutputSchema
@@ -46,12 +47,17 @@ You will receive ONLY the original Marathi news script as input.
 Your job:
 
 1. Rewrite the script in 100–150 Marathi words.
-2. Extract the reporter's name and location from the script. If the reporter's name is not available, leave it blank. If the location is unknown, mark it as '[location inferred]'.
-3. Generate 4–5 Ticker Headlines (each 5–6 Marathi words, important points only).
-4. The rewritten script must:
+2. Output must include:
+
+   * प्रतिनिधी (use this exact word; leave blank if not provided)
+   * लोकेशन (City - District format, realistic from script; if unknown, mark \\[location inferred])
+   * 4–5 Ticker Headlines (each 5–6 Marathi words, important points only)
+   * Main rewritten Script
+3. The rewritten script must:
    * Have no grammar mistakes.
    * Be clear, anchor-friendly, and attractive for listeners.
    * Follow YouTube content rules (no hate speech, no abusive words, no personal addresses, no copyright violation).
+4. After rewriting the script, calculate the word count and include it in the 'wordCount' field.
 
 Original Script: {{{originalScript}}}
 `,
@@ -71,12 +77,14 @@ const rewriteNewsScriptFlow = ai.defineFlow(
     const headlines = output?.headlines ?? [];
     const reporterName = output?.reporterName ?? '';
     const location = output?.location ?? '';
+    const wordCount = output?.wordCount ?? 0;
 
     return {
       rewrittenScript,
       headlines,
       reporterName,
       location,
+      wordCount,
     };
   }
 );

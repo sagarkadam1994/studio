@@ -13,6 +13,7 @@ export interface OutputData {
   headlines: string[];
   reporterName: string;
   location: string;
+  wordCount: number;
 }
 
 export default function Home() {
