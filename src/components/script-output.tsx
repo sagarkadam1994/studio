@@ -13,9 +13,8 @@ import {
   Hash,
   Globe,
   Link,
-  Image as ImageIcon,
+  ClipboardCopy,
 } from 'lucide-react';
-import Image from 'next/image';
 import { type OutputData } from '@/app/page';
 import {
   Card,
@@ -26,6 +25,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from './ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface ScriptOutputProps {
   output: OutputData | null;
@@ -33,6 +34,46 @@ interface ScriptOutputProps {
 }
 
 export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
+  const { toast } = useToast();
+
+  const handleCopy = (textToCopy: string, type: string) => {
+    navigator.clipboard
+      .writeText(textToCopy)
+      .then(() => {
+        toast({
+          title: 'कॉपी केले!',
+          description: `${type} यशस्वीरित्या कॉपी केले आहे.`,
+        });
+      })
+      .catch((err) => {
+        toast({
+          variant: 'destructive',
+          title: 'त्रुटी',
+          description: 'कॉपी करण्यात अयशस्वी.',
+        });
+        console.error('Failed to copy text: ', err);
+      });
+  };
+
+  const createCopyText = {
+    script: (output: OutputData) =>
+      `प्रतिनिधी: ${output.reporterName}\n` +
+      `ठिकाण: ${output.location}\n\n` +
+      `ठळक बातम्या (Headline Ticker):\n${output.headlines.join('\n')}\n\n` +
+      `पुन्हा लिहिलेली स्क्रिप्ट:\n${output.rewrittenScript}`,
+    youtube: (output: OutputData) =>
+      `YouTube Title: ${output.youtube.youtubeTitle}\n\n` +
+      `Thumbnail साठी वाक्य: ${output.youtube.thumbnailText}\n\n` +
+      `Description:\n${output.youtube.description}\n\n` +
+      `Tags: ${output.youtube.tags.join(', ')}\n\n` +
+      `Hashtags: ${output.youtube.hashtags.join(' ')}`,
+    website: (output: OutputData) =>
+      `Title: ${output.website.title}\n\n` +
+      `Permalink: ${output.website.permalink}\n\n` +
+      `Tags: ${output.website.tags.join(', ')}\n\n` +
+      `Category: ${output.website.category}\n\n` +
+      `Article:\n${output.website.article}`,
+  };
 
   if (isLoading) {
     return <OutputSkeleton />;
@@ -53,10 +94,12 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
   return (
     <Card className="shadow-lg border-2 border-border/60">
       <CardHeader>
-        <CardTitle className="font-headline text-xl flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <span>आउटपुट</span>
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="font-headline text-xl flex items-center gap-2">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <span>आउटपुट</span>
+          </CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="script">
@@ -71,7 +114,7 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
               <Globe className="mr-2 h-4 w-4" /> Website
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="script" className="pt-4">
+          <TabsContent value="script" className="pt-4 space-y-4">
             <div className="space-y-4">
               <div className="flex flex-wrap gap-4 text-sm">
                 <Badge
@@ -120,6 +163,14 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
                 </p>
               </div>
             </div>
+             <Button
+              variant="outline"
+              className="w-full mt-4"
+              onClick={() => handleCopy(createCopyText.script(output), 'स्क्रिप्ट माहिती')}
+            >
+              <ClipboardCopy className="mr-2 h-4 w-4" />
+              सर्व स्क्रिप्ट माहिती कॉपी करा
+            </Button>
           </TabsContent>
           <TabsContent value="youtube" className="pt-4">
             <div className="space-y-4">
@@ -169,6 +220,14 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
                 </p>
               </div>
             </div>
+             <Button
+              variant="outline"
+              className="w-full mt-4"
+              onClick={() => handleCopy(createCopyText.youtube(output), 'YouTube माहिती')}
+            >
+              <ClipboardCopy className="mr-2 h-4 w-4" />
+              सर्व YouTube माहिती कॉपी करा
+            </Button>
           </TabsContent>
           <TabsContent value="website" className="pt-4">
             <div className="space-y-4">
@@ -218,6 +277,14 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
                 </p>
               </div>
             </div>
+             <Button
+              variant="outline"
+              className="w-full mt-4"
+              onClick={() => handleCopy(createCopyText.website(output), 'वेबसाइट माहिती')}
+            >
+              <ClipboardCopy className="mr-2 h-4 w-4" />
+              सर्व वेबसाइट माहिती कॉपी करा
+            </Button>
           </TabsContent>
         </Tabs>
       </CardContent>
