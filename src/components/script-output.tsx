@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Sparkles, CheckCircle2, User, MapPin, Youtube, ThumbsUp, Tags, FileSignature } from "lucide-react";
+import { FileText, Sparkles, CheckCircle2, User, MapPin, Youtube, ThumbsUp, Tags, FileSignature, Hash } from "lucide-react";
 import { type OutputData } from "@/app/page";
 import {
   Card,
@@ -130,6 +130,17 @@ export function ScriptOutput({
                 <div className="flex flex-wrap gap-2 pl-4">
                   {output.youtube.tags.map((tag, index) => (
                     <Badge key={index} variant="outline">{tag}</Badge>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
+                  <Hash className="h-5 w-5 text-primary" />
+                  <span>Hashtags</span>
+                </h4>
+                <div className="flex flex-wrap gap-2 pl-4">
+                  {output.youtube.hashtags.map((tag, index) => (
+                    <Badge key={index} variant="outline">#{tag}</Badge>
                   ))}
                 </div>
               </div>

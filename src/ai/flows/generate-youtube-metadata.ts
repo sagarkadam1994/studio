@@ -31,8 +31,15 @@ const GenerateYoutubeMetadataOutputSchema = z.object({
     .describe(
       'Two attractive sentences for the thumbnail to entice viewers to click.'
     ),
-  description: z.string().describe('A YouTube video description.'),
+  description: z
+    .string()
+    .describe(
+      'A YouTube video description, optimized for SEO with a mix of Marathi and English keywords.'
+    ),
   tags: z.array(z.string()).describe('An array of YouTube video tags.'),
+  hashtags: z
+    .array(z.string())
+    .describe('An array of relevant YouTube hashtags.'),
 });
 export type GenerateYoutubeMetadataOutput = z.infer<
   typeof GenerateYoutubeMetadataOutputSchema
@@ -56,8 +63,9 @@ News Script:
 Your task is to provide:
 1.  **YouTube Title:** A viral, click-worthy title in Marathi, around 100 characters.
 2.  **Thumbnail Text:** Two short, attractive Marathi sentences that create curiosity and encourage clicks.
-3.  **Description:** A well-structured YouTube description in Marathi.
-4.  **Tags:** A list of relevant Marathi tags to improve discoverability.`,
+3.  **Description:** A well-structured, SEO-friendly YouTube description. It should include a mix of Marathi and English keywords relevant to the news.
+4.  **Tags:** A list of relevant Marathi and English tags to improve discoverability. Each tag should be a single word or a short phrase.
+5.  **Hashtags:** A list of relevant hashtags, including some in English.`,
 });
 
 const generateYoutubeMetadataFlow = ai.defineFlow(

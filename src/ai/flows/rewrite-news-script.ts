@@ -36,10 +36,16 @@ const GenerateYoutubeMetadataOutputSchema = z.object({
     .describe(
       'Two attractive sentences for the thumbnail to entice viewers to click.'
     ),
-  description: z.string().describe('A YouTube video description.'),
+  description: z
+    .string()
+    .describe(
+      'A YouTube video description, optimized for SEO with a mix of Marathi and English keywords.'
+    ),
   tags: z.array(z.string()).describe('An array of YouTube video tags.'),
+  hashtags: z
+    .array(z.string())
+    .describe('An array of relevant YouTube hashtags.'),
 });
-
 
 const RewriteNewsScriptOutputSchema = z.object({
   rewrittenScript: z
