@@ -57,6 +57,13 @@ export default function Home() {
       clearInterval(timer);
     };
   }, []);
+  
+  useEffect(() => {
+    if (output) {
+      const audio = new Audio('https://actions.google.com/sounds/v1/events/success.ogg');
+      audio.play().catch(error => console.error("Audio playback failed:", error));
+    }
+  }, [output]);
 
   const addToHistory = (input: ScriptFormData, output: OutputData) => {
     const newEntry: HistoryEntry = {
@@ -197,7 +204,7 @@ export default function Home() {
        <footer className="bg-background border-t border-border mt-8">
         <div className="container mx-auto py-4 px-4 text-center text-muted-foreground text-sm">
           <p>
-            Creator - <strong>Sagar Kadam</strong> | Made for 'Maze Kokan News Channel'.
+            Creator - <strong>Sagar Kadam</strong> | Made for &apos;Maze Kokan News Channel&apos;.
           </p>
         </div>
       </footer>
