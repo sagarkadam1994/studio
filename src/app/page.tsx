@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Newspaper, History } from "lucide-react";
+import { Newspaper, History, Calendar, Clock } from "lucide-react";
 
 import { ScriptForm, type ScriptFormData } from "@/components/script-form";
 import { ScriptOutput } from "@/components/script-output";
@@ -34,6 +34,7 @@ export default function Home() {
   const [output, setOutput] = useState<OutputData | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
 
   const { toast } = useToast();
 
@@ -46,6 +47,15 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to load history from localStorage", error);
     }
+
+    // Set date/time on client to avoid hydration mismatch
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
   }, []);
 
   const addToHistory = (input: ScriptFormData, output: OutputData) => {
@@ -111,11 +121,26 @@ export default function Home() {
       console.error("Failed to clear history from localStorage", error);
     }
   };
+  
+  const formatDateTime = (date: Date) => {
+    const options: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    };
+    const dateString = date.toLocaleDateString('mr-IN', options);
+    const timeString = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    return { date: dateString, time: timeString };
+  };
+
+  const { date, time } = currentDateTime ? formatDateTime(currentDateTime) : { date: "Loading...", time: ""};
+
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="container mx-auto px-4 py-8 flex-grow">
-        <header className="flex items-center justify-between gap-4 mb-8">
+        <header className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <div className="p-2 bg-primary/10 rounded-lg">
               <Newspaper className="h-10 w-10 text-primary" />
@@ -129,10 +154,24 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <Button variant="outline" size="lg" onClick={() => setIsHistoryOpen(true)}>
-            <History className="mr-2 h-5 w-5" />
-            History
-          </Button>
+          <div className="flex items-center gap-4">
+            {currentDateTime && (
+              <div className="text-right">
+                <div className="flex items-center justify-end gap-2 text-lg font-semibold text-foreground">
+                   <Calendar className="h-5 w-5" />
+                   <span>{date}</span>
+                </div>
+                 <div className="flex items-center justify-end gap-2 text-muted-foreground">
+                   <Clock className="h-4 w-4" />
+                   <span>{time}</span>
+                </div>
+              </div>
+            )}
+            <Button variant="outline" size="lg" onClick={() => setIsHistoryOpen(true)}>
+              <History className="mr-2 h-5 w-5" />
+              History
+            </Button>
+          </div>
         </header>
         
         <HistorySidebar
