@@ -17,16 +17,11 @@ export interface OutputData {
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [output, setOutput] = useState<OutputData | null>(null);
-  const [submittedData, setSubmittedData] = useState<Omit<
-    ScriptFormData,
-    "script"
-  > | null>(null);
   const { toast } = useToast();
 
   const handleGenerate = async (data: ScriptFormData) => {
     setIsLoading(true);
     setOutput(null);
-    setSubmittedData({ reporter: data.reporter, location: data.location });
 
     try {
       const result = await generateScriptAndHeadlinesAction({
@@ -77,8 +72,6 @@ export default function Home() {
           <div className="flex flex-col gap-8">
              <ScriptOutput
               output={output}
-              reporter={submittedData?.reporter}
-              location={submittedData?.location}
               isLoading={isLoading}
             />
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Sparkles, User, MapPin, CheckCircle2 } from "lucide-react";
+import { FileText, Sparkles, CheckCircle2 } from "lucide-react";
 import { type OutputData } from "@/app/page";
 import {
   Card,
@@ -9,19 +9,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 
 interface ScriptOutputProps {
   output: OutputData | null;
-  reporter?: string;
-  location?: string;
   isLoading: boolean;
 }
 
 export function ScriptOutput({
   output,
-  reporter,
-  location,
   isLoading,
 }: ScriptOutputProps) {
   if (isLoading) {
@@ -51,14 +46,6 @@ export function ScriptOutput({
           <p className="text-lg leading-relaxed whitespace-pre-wrap">
             {output.rewrittenScript}
           </p>
-           <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t">
-              <Badge variant="outline" className="text-base p-2 flex items-center gap-2">
-                <User className="h-4 w-4 text-accent" /> प्रतिनिधी: {reporter}
-              </Badge>
-              <Badge variant="outline" className="text-base p-2 flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-accent" /> ठिकाण: {location}
-              </Badge>
-            </div>
         </CardContent>
       </Card>
 
@@ -96,10 +83,6 @@ function OutputSkeleton() {
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-5/6" />
                     <Skeleton className="h-4 w-3/4" />
-                    <div className="flex gap-4 mt-6 pt-4 border-t">
-                        <Skeleton className="h-8 w-32" />
-                        <Skeleton className="h-8 w-32" />
-                    </div>
                 </CardContent>
             </Card>
              <Card className="shadow-lg">
