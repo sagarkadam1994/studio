@@ -51,7 +51,7 @@ Your job:
 
    * प्रतिनिधी (use this exact word; leave blank if not provided)
    * लोकेशन (City - District format, realistic from script; if unknown, mark \\[location inferred])
-   * 4–5 Ticker Headlines (each 5–6 Marathi words, important points only)
+   * 4–5 Ticker Headlines (each headline must be strictly 5–6 Marathi words, important points only)
    * Main rewritten Script
 3. The rewritten script must:
    * Have no grammar mistakes.
