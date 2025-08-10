@@ -172,22 +172,6 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
           </TabsContent>
           <TabsContent value="website" className="pt-4">
             <div className="space-y-4">
-               {output.website.imageUrl && (
-                <div>
-                   <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
-                    <ImageIcon className="h-5 w-5 text-primary" />
-                    <span>लेखासाठी इमेज</span>
-                  </h4>
-                  <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
-                    <Image
-                      src={output.website.imageUrl}
-                      alt={output.website.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                </div>
-              )}
               <div>
                 <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
                   <FileSignature className="h-5 w-5 text-primary" />
