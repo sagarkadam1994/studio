@@ -58,13 +58,6 @@ export default function Home() {
     };
   }, []);
   
-  useEffect(() => {
-    if (output) {
-      const audio = new Audio('https://actions.google.com/sounds/v1/events/success.ogg');
-      audio.play().catch(error => console.error("Audio playback failed:", error));
-    }
-  }, [output]);
-
   const addToHistory = (input: ScriptFormData, output: OutputData) => {
     const newEntry: HistoryEntry = {
       id: new Date().toISOString(),
@@ -100,6 +93,8 @@ export default function Home() {
       } else if (result.data) {
         setOutput(result.data);
         addToHistory(data, result.data);
+        const audio = new Audio('https://actions.google.com/sounds/v1/events/success.ogg');
+        audio.play().catch(error => console.error("Audio playback failed:", error));
       }
     } catch (e) {
       toast({
@@ -204,7 +199,7 @@ export default function Home() {
        <footer className="bg-background border-t border-border mt-8">
         <div className="container mx-auto py-4 px-4 text-center text-muted-foreground text-sm">
           <p>
-            Creator - <strong>Sagar Kadam</strong> | Made for &apos;Maze Kokan News Channel&apos;.
+            Creator - <strong>Sagar Kadam</strong> | Made for 'Maze Kokan News Channel'.
           </p>
         </div>
       </footer>
