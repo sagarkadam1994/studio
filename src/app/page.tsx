@@ -7,7 +7,8 @@ import { ScriptForm, type ScriptFormData } from "@/components/script-form";
 import { ScriptOutput } from "@/components/script-output";
 import { generateScriptAndHeadlinesAction } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
-import { GenerateYoutubeMetadataOutput } from "@/ai/flows/generate-youtube-metadata";
+import { type GenerateYoutubeMetadataOutput } from "@/ai/flows/generate-youtube-metadata";
+import { type GenerateWebsiteArticleOutput } from "@/ai/flows/generate-website-article";
 import { Button } from "@/components/ui/button";
 import { HistorySidebar } from "@/components/history-sidebar";
 
@@ -18,6 +19,7 @@ export interface OutputData {
   location: string;
   wordCount: number;
   youtube: GenerateYoutubeMetadataOutput;
+  website: GenerateWebsiteArticleOutput;
 }
 
 export interface HistoryEntry {

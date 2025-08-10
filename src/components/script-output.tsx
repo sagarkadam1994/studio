@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Sparkles, CheckCircle2, User, MapPin, Youtube, ThumbsUp, Tags, FileSignature, Hash } from "lucide-react";
+import { FileText, Sparkles, CheckCircle2, User, MapPin, Youtube, ThumbsUp, Tags, FileSignature, Hash, Globe, Link } from "lucide-react";
 import { type OutputData } from "@/app/page";
 import {
   Card,
@@ -45,12 +45,15 @@ export function ScriptOutput({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="script">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="script">
               <FileText className="mr-2 h-4 w-4" /> स्क्रिप्ट
             </TabsTrigger>
             <TabsTrigger value="youtube">
               <Youtube className="mr-2 h-4 w-4" /> YouTube
+            </TabsTrigger>
+            <TabsTrigger value="website">
+              <Globe className="mr-2 h-4 w-4" /> Website
             </TabsTrigger>
           </TabsList>
           <TabsContent value="script" className="pt-4">
@@ -142,6 +145,37 @@ export function ScriptOutput({
               </div>
             </div>
           </TabsContent>
+           <TabsContent value="website" className="pt-4">
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
+                  <FileSignature className="h-5 w-5 text-primary" />
+                  <span>Title</span>
+                </h4>
+                <p className="text-base border-l-4 border-primary/50 pl-4">
+                  {output.website.title}
+                </p>
+              </div>
+              <div>
+                <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
+                  <Link className="h-5 w-5 text-primary" />
+                  <span>Permalink</span>
+                </h4>
+                <p className="text-base border-l-4 border-primary/50 pl-4">
+                  {output.website.permalink}
+                </p>
+              </div>
+              <div>
+                <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <span>Article</span>
+                </h4>
+                <p className="text-base whitespace-pre-wrap border-l-4 border-primary/50 pl-4">
+                  {output.website.article}
+                </p>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
       </CardContent>
     </Card>
@@ -156,7 +190,8 @@ function OutputSkeleton() {
                     <Skeleton className="h-7 w-1/2" />
                 </CardHeader>
                 <CardContent>
-                  <div className="grid w-full grid-cols-2 gap-2">
+                  <div className="grid w-full grid-cols-3 gap-2">
+                    <Skeleton className="h-10 w-full" />
                     <Skeleton className="h-10 w-full" />
                     <Skeleton className="h-10 w-full" />
                   </div>

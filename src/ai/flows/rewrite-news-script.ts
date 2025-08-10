@@ -12,8 +12,10 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {
   generateYoutubeMetadata,
-  type GenerateYoutubeMetadataOutput,
 } from './generate-youtube-metadata';
+import {
+  generateWebsiteArticle,
+} from './generate-website-article';
 
 const RewriteNewsScriptInputSchema = z.object({
   originalScript: z
@@ -47,6 +49,20 @@ const GenerateYoutubeMetadataOutputSchema = z.object({
     .describe('An array of relevant YouTube hashtags.'),
 });
 
+const GenerateWebsiteArticleOutputSchema = z.object({
+  title: z.string().describe('An SEO-friendly title for the website article.'),
+  permalink: z
+    .string()
+    .describe(
+      'A URL-friendly permalink/slug for the article, based on the title.'
+    ),
+  article: z
+    .string()
+    .describe(
+      'A 400-600 word SEO-friendly article in a mix of Marathi and English.'
+    ),
+});
+
 const RewriteNewsScriptOutputSchema = z.object({
   rewrittenScript: z
     .string()
@@ -58,6 +74,7 @@ const RewriteNewsScriptOutputSchema = z.object({
     .describe('An array of generated news headlines.'),
   wordCount: z.number().describe('The word count of the rewritten script.'),
   youtube: GenerateYoutubeMetadataOutputSchema,
+  website: GenerateWebsiteArticleOutputSchema,
 });
 export type RewriteNewsScriptOutput = z.infer<
   typeof RewriteNewsScriptOutputSchema
@@ -117,7 +134,10 @@ const rewriteNewsScriptFlow = ai.defineFlow(
     const location = output?.location ?? '';
     const wordCount = output?.wordCount ?? 0;
 
-    const youtube = await generateYoutubeMetadata({ rewrittenScript });
+    const [youtube, website] = await Promise.all([
+      generateYoutubeMetadata({ rewrittenScript }),
+      generateWebsiteArticle({ rewrittenScript })
+    ]);
 
     return {
       rewrittenScript,
@@ -126,6 +146,7 @@ const rewriteNewsScriptFlow = ai.defineFlow(
       location,
       wordCount,
       youtube,
+      website,
     };
   }
 );
