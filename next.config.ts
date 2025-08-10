@@ -18,11 +18,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
+   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals.push({
-        'node-fetch': 'commonjs2 node-fetch',
-      });
+      config.externals.push('node-fetch');
     }
     return config;
   },
