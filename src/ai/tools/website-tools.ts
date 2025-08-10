@@ -25,13 +25,16 @@ async function getOrCreateTermId(
   term: string,
   taxonomy: 'categories' | 'tags'
 ): Promise<number | null> {
+  if (!term?.trim()) return null;
+
   const authHeader = getAuthHeader();
+  const endpoint = `${WP_API_BASE}/${taxonomy}`;
   const DEFAULT_CATEGORY_ID = 1; // 'Uncategorized' is typically ID 1
 
-  // Search for existing term
   try {
+    // 1. Search for existing term
     const searchResponse = await fetch(
-      `${WP_API_BASE}/${taxonomy}?search=${encodeURIComponent(term)}&_fields=id,name`,
+      `${endpoint}?search=${encodeURIComponent(term)}&_fields=id,name`,
       {
         headers: {Authorization: authHeader},
       }
@@ -46,21 +49,52 @@ async function getOrCreateTermId(
         return exactMatch.id;
       }
     }
-  } catch (searchError) {
-      console.error(`Error searching for ${taxonomy} '${term}':`, searchError);
-      // Fall through to the default behavior
-  }
 
-  // If term not found, for categories, use default. For tags, skip.
-  if (taxonomy === 'categories') {
-    console.log(`Category '${term}' not found. Using default category.`);
-    return DEFAULT_CATEGORY_ID;
+    // 2. If not found, create it
+    const createResponse = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: authHeader,
+        },
+        body: JSON.stringify({ name: term }),
+    });
+
+    if (createResponse.ok) {
+        const newTerm: any = await createResponse.json();
+        console.log(`Successfully created ${taxonomy} '${term}' with ID ${newTerm.id}`);
+        return newTerm.id;
+    }
+
+    const errorBody: any = await createResponse.json();
+     // If creation fails because it already exists (race condition, etc.)
+    if (errorBody.code === 'term_exists') {
+        const existingId = errorBody.data?.term_id;
+        if(existingId) {
+             console.log(`Term '${term}' already exists with ID ${existingId}. Using it.`);
+             return existingId;
+        }
+    }
+    
+    console.error(`Failed to create ${taxonomy} '${term}'. Reason: ${errorBody.message}`);
+
+    // 3. Fallback logic
+    if (taxonomy === 'categories') {
+        console.log(`Using default category.`);
+        return DEFAULT_CATEGORY_ID;
+    }
+    
+    // For tags, if creation fails, we skip it.
+    return null;
+
+  } catch (error) {
+    console.error(`Error processing ${taxonomy} '${term}':`, error);
+     if (taxonomy === 'categories') {
+        console.log(`Using default category due to error.`);
+        return DEFAULT_CATEGORY_ID;
+    }
+    return null;
   }
-  
-  // For tags that don't exist, we will not create them to avoid issues.
-  // We'll just skip them.
-  console.log(`Tag '${term}' not found. Skipping.`);
-  return null;
 }
 
 export const postToWebsiteTool = ai.defineTool(
@@ -94,7 +128,9 @@ export const postToWebsiteTool = ai.defineTool(
       const authHeader = getAuthHeader();
 
       // Get or create category and tag IDs
+      console.log('Processing category...');
       const categoryId = await getOrCreateTermId(input.category, 'categories');
+      console.log('Processing tags...');
       const tagIdPromises = input.tags.map(tag => getOrCreateTermId(tag, 'tags'));
       const tagIds = (await Promise.all(tagIdPromises)).filter((id): id is number => id !== null);
       
@@ -112,6 +148,7 @@ export const postToWebsiteTool = ai.defineTool(
         postData.tags = tagIds;
       }
 
+      console.log('Posting data to WordPress:', JSON.stringify(postData, null, 2));
 
       const response = await fetch(`${WP_API_BASE}/posts`, {
         method: 'POST',
@@ -134,6 +171,7 @@ export const postToWebsiteTool = ai.defineTool(
       }
 
       const responseData: any = await response.json();
+      console.log('Successfully posted to WordPress:', responseData.link);
 
       return {
         success: true,
