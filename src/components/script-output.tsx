@@ -275,6 +275,9 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
                 <p className="text-base whitespace-pre-wrap border-l-4 border-primary/50 pl-4">
                   {output.website.article}
                 </p>
+                <p className="text-right text-sm text-muted-foreground mt-2">
+                  Word Count: {output.website.wordCount}
+                </p>
               </div>
             </div>
              <Button

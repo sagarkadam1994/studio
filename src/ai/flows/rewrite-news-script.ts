@@ -63,6 +63,7 @@ const GenerateWebsiteArticleOutputSchema = z.object({
     ),
   tags: z.array(z.string()).describe('An array of relevant tags for the article.'),
   category: z.string().describe('A relevant category for the article.'),
+  wordCount: z.number().describe('The word count of the generated article.'),
 });
 
 const RewriteNewsScriptOutputSchema = z.object({
