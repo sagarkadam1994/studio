@@ -164,13 +164,14 @@ export const postToWebsiteTool = ai.defineTool(
       const responseText = await response.text();
       if (!response.ok) {
         let errorMessage = `An unknown error occurred while posting. Status: ${response.status}.`;
+        let errorDetails = `Raw Response: ${responseText}`;
         try {
             const errorBody = JSON.parse(responseText);
             errorMessage = `WordPress API Error: ${errorBody.message || 'No specific message.'} (Code: ${errorBody.code || 'N/A'})`;
         } catch {
-            errorMessage = `${errorMessage} Raw Response: ${responseText}`;
+            // This block intentionally left empty. If JSON parsing fails, we use the raw responseText.
         }
-        console.error('WordPress API Error Details:', errorMessage);
+        console.error('WordPress API Error Details:', errorMessage, errorDetails);
         throw new Error(errorMessage);
       }
 
