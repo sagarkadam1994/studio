@@ -72,15 +72,20 @@ async function getOrCreateTermId(
         return newTerm.id;
     }
 
-    const errorBody: any = await createResponse.json();
-    // If creation fails because it already exists (a common race condition or search issue)
-    if (errorBody.code === 'term_exists' && errorBody.data?.term_id) {
-        const existingId = errorBody.data.term_id;
-        console.log(`Term '${term}' already exists with ID ${existingId} (detected on creation). Using it.`);
-        return existingId;
+    const errorText = await createResponse.text();
+    try {
+        const errorBody = JSON.parse(errorText);
+        // If creation fails because it already exists (a common race condition or search issue)
+        if (errorBody.code === 'term_exists' && errorBody.data?.term_id) {
+            const existingId = errorBody.data.term_id;
+            console.log(`Term '${term}' already exists with ID ${existingId} (detected on creation). Using it.`);
+            return existingId;
+        }
+        console.error(`Failed to create ${taxonomy} '${term}'. Status: ${createResponse.status}, Reason: ${errorBody.message || 'Unknown'}`);
+    } catch (e) {
+        console.error(`Failed to create ${taxonomy} '${term}'. Status: ${createResponse.status}. Non-JSON response: ${errorText}`);
     }
-    
-    console.error(`Failed to create ${taxonomy} '${term}'. Status: ${createResponse.status}, Reason: ${errorBody.message || 'Unknown'}`);
+
 
   } catch (error: any) {
     console.error(`An unexpected error occurred while processing ${taxonomy} '${term}':`, error.message);
