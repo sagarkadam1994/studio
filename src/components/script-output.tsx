@@ -83,7 +83,7 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
 
     try {
       const result = await postToWebsiteAction(output.website);
-      if (result.data) { // Always expect data now
+      if (result.data) {
         setPostResult(result.data);
          if (result.data.success) {
            toast({
@@ -91,11 +91,17 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
              description: result.data.message,
            });
          }
+      } else if (result.error) {
+         setPostResult({
+           success: false, 
+           message: result.error, 
+           details: (result as any).details || 'No additional details.'
+          });
       } else {
-         setPostResult({success: false, message: 'An unexpected error occurred.', details: result.error});
+         setPostResult({success: false, message: 'An unexpected error occurred.', details: 'The server action returned an empty response.'});
       }
     } catch (e: any) {
-      setPostResult({success: false, message: e.message || 'An unknown error occurred.'});
+      setPostResult({success: false, message: 'Failed to call the server action.', details: e.message || 'An unknown client-side error occurred.'});
       console.error(e);
     } finally {
       setIsPosting(false);
@@ -110,10 +116,10 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
       if (result.data) {
         setPostResult(result.data);
       } else {
-        setPostResult({ success: false, message: 'Connection Test Failed', details: result.error });
+        setPostResult({ success: false, message: 'Connection Test Failed', details: (result as any).error || 'The server action returned an empty response.' });
       }
     } catch (e: any) {
-        setPostResult({ success: false, message: 'Connection Test Failed', details: e.message || 'An unknown error occurred.' });
+        setPostResult({ success: false, message: 'Connection Test Failed', details: e.message || 'An unknown client-side error occurred.' });
     } finally {
       setIsTesting(false);
     }
