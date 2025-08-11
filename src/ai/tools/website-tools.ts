@@ -238,8 +238,6 @@ export const testWebsiteConnectionTool = ai.defineTool(
           errorMessage = `Connection failed: ${errorBody.message || 'No specific message.'}`;
           errorDetails = `URL: ${endpoint}\nStatus: ${response.status}\nCode: ${errorBody.code || 'N/A'}\nMessage: ${errorBody.message || 'No specific message.'}\nRaw Response: ${responseText}`;
         } catch {
-           // This block will run if the responseText is not valid JSON.
-           // This is important for catching HTML error pages or other non-JSON responses.
            errorMessage = `Connection failed with a non-JSON response. Status: ${response.status}.`;
         }
         console.error('Connection Test Error:', errorDetails);

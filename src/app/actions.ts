@@ -29,12 +29,12 @@ export async function generateScriptAndHeadlinesAction(
 export async function postToWebsiteAction(websiteData: CreateWebsitePostInput) {
   try {
     const result = await createWebsitePost(websiteData);
-    // The tool now returns a success flag and a message/details.
-    // We will pass this directly to the client.
+    if (!result.success) {
+        return { error: result.message, details: result.details };
+    }
     return { data: result };
   } catch (error) {
     console.error('Error in postToWebsiteAction:', error);
-    // Ensure that even in the case of an unexpected exception, we return a structured error.
     return {
       error: 'An unexpected error occurred in postToWebsiteAction.',
       details: error instanceof Error ? error.message : String(error),
@@ -45,12 +45,15 @@ export async function postToWebsiteAction(websiteData: CreateWebsitePostInput) {
 export async function testConnectionAction() {
     try {
         const result = await testWebsiteConnectionTool({});
-        // The tool returns a structured response, pass it directly.
+         if (!result.success) {
+            return { error: result.message, details: result.details, data: result };
+        }
         return { data: result };
     } catch (error) {
         console.error('Exception in testConnectionAction:', error);
-        // If the action itself throws an error, capture it and return a structured error response.
         return {
+             error: 'An unexpected exception occurred during the connection test action.',
+             details: error instanceof Error ? error.message : String(error),
              data: {
               success: false,
               message: 'An unexpected exception occurred during the connection test action.',

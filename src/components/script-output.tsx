@@ -49,12 +49,20 @@ interface ScriptOutputProps {
   isLoading: boolean;
 }
 
+interface PostResult {
+    success: boolean;
+    message: string;
+    url?: string;
+    details?: string;
+}
+
+
 export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
   const { toast } = useToast();
   const [isPosting, setIsPosting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [postResult, setPostResult] = useState<{success: boolean, message: string, url?: string, details?: string} | null>(null);
+  const [postResult, setPostResult] = useState<PostResult | null>(null);
 
   const handleCopy = (textToCopy: string, type: string) => {
     navigator.clipboard
@@ -90,6 +98,13 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
              title: 'यशस्वीरित्या पोस्ट केले!',
              description: result.data.message,
            });
+         } else {
+            // Even if data is present, success might be false
+            setPostResult({
+                success: false,
+                message: result.data.message || 'An error occurred.',
+                details: result.data.details
+            });
          }
       } else if (result.error) {
          setPostResult({
@@ -113,10 +128,16 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
     setPostResult(null);
     try {
       const result = await testConnectionAction();
+      // The action now consistently returns a 'data' object, even on failure.
       if (result.data) {
         setPostResult(result.data);
       } else {
-        setPostResult({ success: false, message: 'Connection Test Failed', details: (result as any).error || 'The server action returned an empty response.' });
+        // Fallback for unexpected action structure
+        setPostResult({ 
+            success: false, 
+            message: 'Connection Test Failed', 
+            details: (result as any).error || 'The server action returned an invalid response.' 
+        });
       }
     } catch (e: any) {
         setPostResult({ success: false, message: 'Connection Test Failed', details: e.message || 'An unknown client-side error occurred.' });
