@@ -103,7 +103,7 @@ You will receive ONLY the original Marathi news script as input.
 
 Your job:
 
-1. Rewrite the script in 100–150 Marathi words.
+1. Rewrite the script in 150–200 Marathi words.
 2. Output must include:
 
    * प्रतिनिधी (use this exact word; leave blank if not provided)
