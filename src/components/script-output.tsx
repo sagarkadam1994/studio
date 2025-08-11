@@ -83,14 +83,16 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
 
     try {
       const result = await postToWebsiteAction(output.website);
-      if (result.error) {
-        setPostResult({success: false, message: result.error});
-      } else if (result.data) {
-        toast({
-          title: 'यशस्वीरित्या पोस्ट केले!',
-          description: result.data.message,
-        });
+      if (result.data) { // Always expect data now
         setPostResult(result.data);
+         if (result.data.success) {
+           toast({
+             title: 'यशस्वीरित्या पोस्ट केले!',
+             description: result.data.message,
+           });
+         }
+      } else {
+         setPostResult({success: false, message: 'An unexpected error occurred.', details: result.error});
       }
     } catch (e: any) {
       setPostResult({success: false, message: e.message || 'An unknown error occurred.'});
@@ -105,10 +107,10 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
     setPostResult(null);
     try {
       const result = await testConnectionAction();
-      if (result.error) {
-        setPostResult({ success: false, message: 'Connection Test Failed', details: result.error });
-      } else if (result.data) {
+      if (result.data) {
         setPostResult(result.data);
+      } else {
+        setPostResult({ success: false, message: 'Connection Test Failed', details: result.error });
       }
     } catch (e: any) {
         setPostResult({ success: false, message: 'Connection Test Failed', details: e.message || 'An unknown error occurred.' });
@@ -401,16 +403,15 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
                 </Button>
               </div>
                {postResult && (
-                  <div className={`mt-4 p-4 rounded-md text-sm ${postResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    <p className="font-bold">{postResult.success ? 'Success!' : 'Error'}</p>
-                    <p>{postResult.message}</p>
+                  <div className={`mt-4 p-4 rounded-md text-sm ${postResult.success ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200'}`}>
+                    <p className="font-bold">{postResult.message}</p>
                     {postResult.details && (
-                        <pre className="mt-2 text-xs whitespace-pre-wrap bg-black/10 p-2 rounded">
+                        <pre className="mt-2 text-xs whitespace-pre-wrap bg-black/10 dark:bg-black/20 p-2 rounded">
                           <code>{postResult.details}</code>
                         </pre>
                     )}
                     {postResult.success && postResult.url && (
-                        <a href={postResult.url} target="_blank" rel="noopener noreferrer" className="underline mt-2 inline-block">
+                        <a href={postResult.url} target="_blank" rel="noopener noreferrer" className="underline mt-2 inline-block font-bold">
                             View Post
                         </a>
                     )}

@@ -45,7 +45,11 @@ export async function testConnectionAction() {
     } catch (error) {
         console.error('Connection test action failed:', error);
         return {
-            error: error instanceof Error ? error.message : 'An unknown error occurred during the connection test.',
+            data: {
+              success: false,
+              message: 'An unknown error occurred during the connection test.',
+              details: error instanceof Error ? error.message : String(error)
+            }
         };
     }
 }

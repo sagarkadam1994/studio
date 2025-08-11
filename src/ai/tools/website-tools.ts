@@ -120,6 +120,7 @@ export const postToWebsiteTool = ai.defineTool(
       success: z.boolean(),
       message: z.string(),
       url: z.string().optional(),
+      details: z.string().optional(),
     }),
   },
   async input => {
@@ -170,7 +171,7 @@ export const postToWebsiteTool = ai.defineTool(
             errorMessage = `${errorMessage} Raw Response: ${errorText}`;
         }
         console.error('WordPress API Error Details:', errorMessage);
-        throw new Error(`Failed to post to website. ${errorMessage}`);
+        throw new Error(errorMessage);
       }
 
       const responseData: any = await response.json();
@@ -183,10 +184,12 @@ export const postToWebsiteTool = ai.defineTool(
       };
     } catch (error: any) {
       console.error('Error in postToWebsiteTool:', error);
-       throw new Error(
-          error.message ||
-          'An unexpected error occurred while posting to the website.'
-        );
+       return {
+          success: false,
+          message:
+            'An unexpected error occurred while posting to the website.',
+          details: error.message
+        };
     }
   }
 );
@@ -227,18 +230,19 @@ export const testWebsiteConnectionTool = ai.defineTool(
       if (!response.ok) {
         const errorText = await response.text();
         let errorMessage = `Failed to connect. Status: ${response.status}.`;
+        let errorDetails = `URL: ${endpoint}\nStatus: ${response.status}\nResponse: ${errorText}`;
         try {
           const errorBody = JSON.parse(errorText);
-          errorMessage = `Connection failed: ${errorBody.message || 'No specific message.'} (Code: ${errorBody.code || 'N/A'})`;
+          errorMessage = `Connection failed: ${errorBody.message || 'No specific message.'}`;
+          errorDetails = `URL: ${endpoint}\nStatus: ${response.status}\nCode: ${errorBody.code || 'N/A'}\nMessage: ${errorBody.message || 'No specific message.'}\nRaw Response: ${errorText}`;
         } catch {
-          errorMessage = `${errorMessage} Raw Response: ${errorText}`;
+          // Non-JSON response, use the raw text.
         }
-        console.error('Connection Test Error:', errorMessage);
+        console.error('Connection Test Error:', errorDetails);
         return {
           success: false,
-          message:
-            'Connection test failed. Please check your credentials and website settings.',
-          details: errorMessage,
+          message: errorMessage,
+          details: errorDetails,
         };
       }
 
