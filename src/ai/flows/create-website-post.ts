@@ -6,10 +6,10 @@ import { postToWebsiteTool } from '../tools/website-tools';
 
 const CreateWebsitePostInputSchema = z.object({
   title: z.string(),
-  permalink: z.string(),
   article: z.string(),
   tags: z.array(z.string()),
   category: z.string(),
+  permalink: z.string(),
 });
 export type CreateWebsitePostInput = z.infer<typeof CreateWebsitePostInputSchema>;
 
@@ -28,6 +28,8 @@ const createWebsitePostFlow = ai.defineFlow(
     outputSchema: CreateWebsitePostOutputSchema,
   },
   async (input) => {
+    // This flow will now directly call the tool.
+    // The tool handles the actual posting logic.
     const result = await postToWebsiteTool(input);
     return result;
   }

@@ -5,7 +5,7 @@ import {
   type RewriteNewsScriptInput,
   type RewriteNewsScriptOutput,
 } from '@/ai/flows/rewrite-news-script';
-import { createWebsitePost } from '@/ai/flows/create-website-post';
+import { createWebsitePost, type CreateWebsitePostInput } from '@/ai/flows/create-website-post';
 
 export async function generateScriptAndHeadlinesAction(
   input: RewriteNewsScriptInput
@@ -25,7 +25,7 @@ export async function generateScriptAndHeadlinesAction(
   }
 }
 
-export async function postToWebsiteAction(websiteData: RewriteNewsScriptOutput['website']) {
+export async function postToWebsiteAction(websiteData: CreateWebsitePostInput) {
   try {
     const result = await createWebsitePost(websiteData);
     return { data: result };

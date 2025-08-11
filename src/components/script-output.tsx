@@ -14,7 +14,10 @@ import {
   Globe,
   Link,
   ClipboardCopy,
+  UploadCloud,
+  Loader2,
 } from 'lucide-react';
+import { useState } from 'react';
 import { type OutputData } from '@/app/page';
 import {
   Card,
@@ -27,6 +30,18 @@ import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { postToWebsiteAction } from '@/app/actions';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './ui/alert-dialog';
+
 
 interface ScriptOutputProps {
   output: OutputData | null;
@@ -35,6 +50,9 @@ interface ScriptOutputProps {
 
 export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
   const { toast } = useToast();
+  const [isPosting, setIsPosting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [postResult, setPostResult] = useState<{success: boolean, message: string, url?: string} | null>(null);
 
   const handleCopy = (textToCopy: string, type: string) => {
     navigator.clipboard
@@ -54,6 +72,42 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
         console.error('Failed to copy text: ', err);
       });
   };
+
+  const handlePostToWebsite = async () => {
+    if (!output) return;
+    setShowConfirmation(false);
+    setIsPosting(true);
+    setPostResult(null);
+
+    try {
+      const result = await postToWebsiteAction(output.website);
+      if (result.error) {
+        toast({
+          variant: 'destructive',
+          title: 'पोस्ट अयशस्वी',
+          description: result.error,
+        });
+        setPostResult({success: false, message: result.error});
+      } else if (result.data) {
+        toast({
+          title: 'यशस्वीरित्या पोस्ट केले!',
+          description: result.data.message,
+        });
+        setPostResult(result.data);
+      }
+    } catch (e: any) {
+      toast({
+        variant: 'destructive',
+        title: 'त्रुटी',
+        description: 'वेबसाइटवर पोस्ट करताना एक अनपेक्षित त्रुटी आली.',
+      });
+      setPostResult({success: false, message: e.message || 'An unknown error occurred.'});
+      console.error(e);
+    } finally {
+      setIsPosting(false);
+    }
+  };
+  
 
   const createCopyText = {
     script: (output: OutputData) =>
@@ -230,6 +284,20 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
             </Button>
           </TabsContent>
           <TabsContent value="website" className="pt-4">
+             <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure you want to post?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will publish the article directly to your website. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handlePostToWebsite}>Post to Website</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <div className="space-y-4">
               <div>
                 <h4 className="font-headline text-lg font-semibold flex items-center gap-2 mb-2">
@@ -272,22 +340,50 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
                   <FileText className="h-5 w-5 text-primary" />
                   <span>Article</span>
                 </h4>
-                <p className="text-base whitespace-pre-wrap border-l-4 border-primary/50 pl-4">
-                  {output.website.article}
-                </p>
+                <div className="text-base whitespace-pre-wrap border-l-4 border-primary/50 pl-4" dangerouslySetInnerHTML={{ __html: output.website.article }} />
                 <p className="text-right text-sm text-muted-foreground mt-2">
                   Word Count: {output.website.wordCount}
                 </p>
               </div>
             </div>
-             <Button
-              variant="outline"
-              className="w-full mt-4"
-              onClick={() => handleCopy(createCopyText.website(output), 'वेबसाइट माहिती')}
-            >
-              <ClipboardCopy className="mr-2 h-4 w-4" />
-              सर्व वेबसाइट माहिती कॉपी करा
-            </Button>
+             <div className="mt-6 flex flex-col gap-4">
+                 <Button
+                    onClick={() => setShowConfirmation(true)}
+                    disabled={isPosting}
+                    className="w-full text-lg py-6"
+                >
+                    {isPosting ? (
+                        <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Posting...
+                        </>
+                    ) : (
+                        <>
+                            <UploadCloud className="mr-2 h-5 w-5" />
+                            Post to Website
+                        </>
+                    )}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleCopy(createCopyText.website(output), 'वेबसाइट माहिती')}
+                >
+                  <ClipboardCopy className="mr-2 h-4 w-4" />
+                  सर्व वेबसाइट माहिती कॉपी करा
+                </Button>
+              </div>
+               {postResult && (
+                  <div className={`mt-4 p-4 rounded-md text-sm ${postResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <p className="font-bold">{postResult.success ? 'Success!' : 'Error'}</p>
+                    <p>{postResult.message}</p>
+                    {postResult.success && postResult.url && (
+                        <a href={postResult.url} target="_blank" rel="noopener noreferrer" className="underline mt-2 inline-block">
+                            View Post
+                        </a>
+                    )}
+                  </div>
+              )}
           </TabsContent>
         </Tabs>
       </CardContent>
