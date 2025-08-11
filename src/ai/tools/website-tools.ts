@@ -161,20 +161,20 @@ export const postToWebsiteTool = ai.defineTool(
         body: JSON.stringify(postData),
       });
 
+      const responseText = await response.text();
       if (!response.ok) {
-        const errorText = await response.text();
         let errorMessage = `An unknown error occurred while posting. Status: ${response.status}.`;
         try {
-            const errorBody = JSON.parse(errorText);
+            const errorBody = JSON.parse(responseText);
             errorMessage = `WordPress API Error: ${errorBody.message || 'No specific message.'} (Code: ${errorBody.code || 'N/A'})`;
         } catch {
-            errorMessage = `${errorMessage} Raw Response: ${errorText}`;
+            errorMessage = `${errorMessage} Raw Response: ${responseText}`;
         }
         console.error('WordPress API Error Details:', errorMessage);
         throw new Error(errorMessage);
       }
 
-      const responseData: any = await response.json();
+      const responseData: any = JSON.parse(responseText);
       console.log('Successfully posted to WordPress:', responseData.link);
 
       return {
@@ -226,17 +226,20 @@ export const testWebsiteConnectionTool = ai.defineTool(
           Authorization: authHeader,
         },
       });
+      
+      const responseText = await response.text();
 
       if (!response.ok) {
-        const errorText = await response.text();
         let errorMessage = `Failed to connect. Status: ${response.status}.`;
-        let errorDetails = `URL: ${endpoint}\nStatus: ${response.status}\nResponse: ${errorText}`;
+        let errorDetails = `URL: ${endpoint}\nStatus: ${response.status}\nResponse: ${responseText}`;
         try {
-          const errorBody = JSON.parse(errorText);
+          const errorBody = JSON.parse(responseText);
           errorMessage = `Connection failed: ${errorBody.message || 'No specific message.'}`;
-          errorDetails = `URL: ${endpoint}\nStatus: ${response.status}\nCode: ${errorBody.code || 'N/A'}\nMessage: ${errorBody.message || 'No specific message.'}\nRaw Response: ${errorText}`;
+          errorDetails = `URL: ${endpoint}\nStatus: ${response.status}\nCode: ${errorBody.code || 'N/A'}\nMessage: ${errorBody.message || 'No specific message.'}\nRaw Response: ${responseText}`;
         } catch {
-          // Non-JSON response, use the raw text.
+           // This block will run if the responseText is not valid JSON.
+           // This is important for catching HTML error pages or other non-JSON responses.
+           errorMessage = `Connection failed with a non-JSON response. Status: ${response.status}.`;
         }
         console.error('Connection Test Error:', errorDetails);
         return {
@@ -245,13 +248,22 @@ export const testWebsiteConnectionTool = ai.defineTool(
           details: errorDetails,
         };
       }
+      
+      try {
+        const data: any[] = JSON.parse(responseText);
+        console.log(`Connection test successful. Found ${data.length} categories.`);
+        return {
+          success: true,
+          message: `Connection successful! Found ${data.length} categories.`,
+        };
+      } catch (error) {
+           return {
+                success: false,
+                message: 'Connection test succeeded, but the response was not valid JSON.',
+                details: `The server responded with status ${response.status}, but the body could not be parsed as JSON. Raw response:\n\n${responseText}`
+           }
+      }
 
-      const data: any[] = await response.json();
-      console.log(`Connection test successful. Found ${data.length} categories.`);
-      return {
-        success: true,
-        message: `Connection successful! Found ${data.length} categories.`,
-      };
     } catch (error: any) {
       console.error('Exception during connection test:', error);
       return {
