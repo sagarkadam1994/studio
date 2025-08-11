@@ -40,10 +40,7 @@ async function getOrCreateTermId(
       }
     );
 
-    if (!searchResponse.ok) {
-        const errorText = await searchResponse.text();
-        console.warn(`Failed to search for ${taxonomy} '${term}'. Status: ${searchResponse.status}. Body: ${errorText}`);
-    } else {
+    if (searchResponse.ok) {
         const existingTerms: any[] = await searchResponse.json();
         const exactMatch = existingTerms.find(
             (t) => t.name.toLowerCase() === term.toLowerCase()
@@ -52,6 +49,10 @@ async function getOrCreateTermId(
             console.log(`Found existing ${taxonomy} '${term}' with ID ${exactMatch.id}.`);
             return exactMatch.id;
         }
+    } else {
+       const errorText = await searchResponse.text();
+       console.warn(`Failed to search for ${taxonomy} '${term}'. Status: ${searchResponse.status}. Body: ${errorText}. Skipping creation.`);
+       // If search fails, skip creation and fallback
     }
 
 
@@ -93,7 +94,7 @@ async function getOrCreateTermId(
 
   // 3. Fallback logic
   if (taxonomy === 'categories') {
-    console.log(`Using default category 'Uncategorized' as a fallback.`);
+    console.log(`Using default category 'Uncategorized' as a fallback for '${term}'.`);
     return DEFAULT_CATEGORY_ID;
   }
   
@@ -144,7 +145,7 @@ export const postToWebsiteTool = ai.defineTool(
         slug: input.permalink,
         content: input.article,
         status: 'publish', // Or 'draft'
-        categories: categoryId ? [categoryId] : [1], // Fallback to 1 if null
+        categories: categoryId ? [categoryId] : [1], // Fallback to 1 (Uncategorized)
         tags: tagIds,
       };
 
