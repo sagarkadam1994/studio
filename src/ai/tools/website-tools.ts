@@ -165,14 +165,14 @@ export const postToWebsiteTool = ai.defineTool(
         let errorMessage = `An unknown error occurred while posting. Status: ${response.status}.`;
         try {
             const errorBody = JSON.parse(errorText);
-            errorMessage = errorBody.message || errorMessage;
+            errorMessage = `WordPress API Error: ${errorBody.message || 'No specific message.'} (Code: ${errorBody.code || 'N/A'})`;
         } catch {
-            errorMessage = `${errorMessage} Body: ${errorText}`;
+            errorMessage = `${errorMessage} Raw Response: ${errorText}`;
         }
-        console.error('WordPress API Error:', errorMessage);
+        console.error('WordPress API Error Details:', errorMessage);
         return {
           success: false,
-          message: `Failed to post to website: ${errorMessage}`,
+          message: `Failed to post to website. ${errorMessage}`,
         };
       }
 
