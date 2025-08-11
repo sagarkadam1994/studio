@@ -16,6 +16,7 @@ import {
   ClipboardCopy,
   UploadCloud,
   Loader2,
+  Settings,
 } from 'lucide-react';
 import { useState } from 'react';
 import { type OutputData } from '@/app/page';
@@ -30,7 +31,7 @@ import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { postToWebsiteAction } from '@/app/actions';
+import { postToWebsiteAction, testConnectionAction } from '@/app/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,8 +52,9 @@ interface ScriptOutputProps {
 export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
   const { toast } = useToast();
   const [isPosting, setIsPosting] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [postResult, setPostResult] = useState<{success: boolean, message: string, url?: string} | null>(null);
+  const [postResult, setPostResult] = useState<{success: boolean, message: string, url?: string, details?: string} | null>(null);
 
   const handleCopy = (textToCopy: string, type: string) => {
     navigator.clipboard
@@ -82,11 +84,6 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
     try {
       const result = await postToWebsiteAction(output.website);
       if (result.error) {
-        toast({
-          variant: 'destructive',
-          title: 'पोस्ट अयशस्वी',
-          description: result.error,
-        });
         setPostResult({success: false, message: result.error});
       } else if (result.data) {
         toast({
@@ -96,15 +93,27 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
         setPostResult(result.data);
       }
     } catch (e: any) {
-      toast({
-        variant: 'destructive',
-        title: 'त्रुटी',
-        description: 'वेबसाइटवर पोस्ट करताना एक अनपेक्षित त्रुटी आली.',
-      });
       setPostResult({success: false, message: e.message || 'An unknown error occurred.'});
       console.error(e);
     } finally {
       setIsPosting(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setPostResult(null);
+    try {
+      const result = await testConnectionAction();
+      if (result.error) {
+        setPostResult({ success: false, message: 'Connection Test Failed', details: result.error });
+      } else if (result.data) {
+        setPostResult(result.data);
+      }
+    } catch (e: any) {
+        setPostResult({ success: false, message: 'Connection Test Failed', details: e.message || 'An unknown error occurred.' });
+    } finally {
+      setIsTesting(false);
     }
   };
   
@@ -372,11 +381,34 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
                   <ClipboardCopy className="mr-2 h-4 w-4" />
                   सर्व वेबसाइट माहिती कॉपी करा
                 </Button>
+                <Button
+                    onClick={handleTestConnection}
+                    disabled={isTesting}
+                    variant="secondary"
+                    className="w-full"
+                >
+                    {isTesting ? (
+                        <>
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                            Testing...
+                        </>
+                    ) : (
+                        <>
+                            <Settings className="mr-2 h-5 w-5" />
+                            Test Connection
+                        </>
+                    )}
+                </Button>
               </div>
                {postResult && (
                   <div className={`mt-4 p-4 rounded-md text-sm ${postResult.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                     <p className="font-bold">{postResult.success ? 'Success!' : 'Error'}</p>
                     <p>{postResult.message}</p>
+                    {postResult.details && (
+                        <pre className="mt-2 text-xs whitespace-pre-wrap bg-black/10 p-2 rounded">
+                          <code>{postResult.details}</code>
+                        </pre>
+                    )}
                     {postResult.success && postResult.url && (
                         <a href={postResult.url} target="_blank" rel="noopener noreferrer" className="underline mt-2 inline-block">
                             View Post

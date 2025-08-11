@@ -170,10 +170,7 @@ export const postToWebsiteTool = ai.defineTool(
             errorMessage = `${errorMessage} Raw Response: ${errorText}`;
         }
         console.error('WordPress API Error Details:', errorMessage);
-        return {
-          success: false,
-          message: `Failed to post to website. ${errorMessage}`,
-        };
+        throw new Error(`Failed to post to website. ${errorMessage}`);
       }
 
       const responseData: any = await response.json();
@@ -186,11 +183,77 @@ export const postToWebsiteTool = ai.defineTool(
       };
     } catch (error: any) {
       console.error('Error in postToWebsiteTool:', error);
+       throw new Error(
+          error.message ||
+          'An unexpected error occurred while posting to the website.'
+        );
+    }
+  }
+);
+
+
+export const testWebsiteConnectionTool = ai.defineTool(
+  {
+    name: 'testWebsiteConnectionTool',
+    description:
+      'Tests the connection to the WordPress website by fetching categories.',
+    inputSchema: z.object({}),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      details: z.string().optional(),
+    }),
+  },
+  async () => {
+    if (!WP_URL || !WP_USER || !WP_PASSWORD) {
       return {
         success: false,
-        message:
-          error.message ||
-          'An unexpected error occurred while posting to the website.',
+        message: 'Website credentials are not configured.',
+      };
+    }
+
+    try {
+      const authHeader = getAuthHeader();
+      const endpoint = `${WP_API_BASE}/categories`;
+      console.log(`Testing connection to: ${endpoint}`);
+
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          Authorization: authHeader,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = `Failed to connect. Status: ${response.status}.`;
+        try {
+          const errorBody = JSON.parse(errorText);
+          errorMessage = `Connection failed: ${errorBody.message || 'No specific message.'} (Code: ${errorBody.code || 'N/A'})`;
+        } catch {
+          errorMessage = `${errorMessage} Raw Response: ${errorText}`;
+        }
+        console.error('Connection Test Error:', errorMessage);
+        return {
+          success: false,
+          message:
+            'Connection test failed. Please check your credentials and website settings.',
+          details: errorMessage,
+        };
+      }
+
+      const data: any[] = await response.json();
+      console.log(`Connection test successful. Found ${data.length} categories.`);
+      return {
+        success: true,
+        message: `Connection successful! Found ${data.length} categories.`,
+      };
+    } catch (error: any) {
+      console.error('Exception during connection test:', error);
+      return {
+        success: false,
+        message: 'An unexpected error occurred during the connection test.',
+        details: error.message,
       };
     }
   }

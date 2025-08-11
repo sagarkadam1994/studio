@@ -6,6 +6,7 @@ import {
   type RewriteNewsScriptOutput,
 } from '@/ai/flows/rewrite-news-script';
 import { createWebsitePost, type CreateWebsitePostInput } from '@/ai/flows/create-website-post';
+import { testWebsiteConnectionTool } from '@/ai/tools/website-tools';
 
 export async function generateScriptAndHeadlinesAction(
   input: RewriteNewsScriptInput
@@ -32,7 +33,19 @@ export async function postToWebsiteAction(websiteData: CreateWebsitePostInput) {
   } catch (error) {
     console.error(error);
     return {
-      error: error instanceof Error ? error.message : 'वेबसाइटवर पोस्ट करण्यात अयशस्वी.',
+      error: error instanceof Error ? error.message : 'An unexpected response was received from the server.',
     };
   }
+}
+
+export async function testConnectionAction() {
+    try {
+        const result = await testWebsiteConnectionTool({});
+        return { data: result };
+    } catch (error) {
+        console.error('Connection test action failed:', error);
+        return {
+            error: error instanceof Error ? error.message : 'An unknown error occurred during the connection test.',
+        };
+    }
 }
