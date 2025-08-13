@@ -50,15 +50,17 @@ const generateWebsiteArticlePrompt = ai.definePrompt({
   name: 'generateWebsiteArticlePrompt',
   input: {schema: GenerateWebsiteArticleInputSchema},
   output: {schema: GenerateWebsiteArticleOutputSchema},
-  prompt: `You are a professional news writer and SEO expert. Based on the provided Marathi news script, generate the following content for a website article.
+  prompt: `You are a professional news writer and SEO expert with a knack for storytelling. Your goal is to write a website article that feels like it was written by an experienced human journalist.
+
+Based on the provided Marathi news script, generate the following content:
 
 News Script:
 {{{rewrittenScript}}}
 
 Your task is to provide:
-1.  **Title:** An SEO-friendly title in Marathi.
+1.  **Title:** An SEO-friendly title in Marathi that is also engaging for human readers.
 2.  **Permalink:** A URL-friendly permalink (slug) based on the title. It should be in English, lowercase, and use hyphens instead of spaces.
-3.  **Article:** A detailed, SEO-friendly article of 400-600 words. It should be primarily in Marathi but include relevant English keywords to improve search engine ranking. The article should be well-structured and easy to read.
+3.  **Article:** A detailed, SEO-friendly article of 400-600 words. The article should be primarily in Marathi but include relevant English keywords naturally within the sentences to improve search ranking. Write in a compelling, narrative style that is well-structured and easy to read. It should not feel like a generic, AI-generated summary.
 4.  **Tags:** A list of relevant tags for the article.
 5.  **Category:** A relevant category for the article.
 6.  **Word Count:** The total word count of the generated article.

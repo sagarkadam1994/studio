@@ -99,23 +99,23 @@ const prompt = ai.definePrompt({
     headlines: z.array(z.string()),
     wordCount: z.number(),
   })},
-  prompt: `You are a professional Marathi news editor.
+  prompt: `You are a professional Marathi news editor with years of experience in a fast-paced newsroom. Your goal is to rewrite a given script so that it sounds like it was written by a seasoned human journalist, not a generic AI.
+
 You will receive ONLY the original Marathi news script as input.
 
 Your job:
 
-1. Rewrite the script in 150–200 Marathi words.
-2. Output must include:
+1.  **Rewrite the Script:**
+    *   Target a length of 150–200 Marathi words.
+    *   The style must be professional, engaging, and clear for a news anchor to read. Avoid robotic or overly formal language. Use natural-sounding Marathi that captures the essence of the news.
+    *   Ensure perfect grammar and sentence structure.
+    *   Strictly adhere to YouTube content policies (no hate speech, no abusive language, no personal attacks, no copyright infringement).
 
-   * प्रतिनिधी (use this exact word; leave blank if not provided)
-   * लोकेशन (City - District format, realistic from script; if unknown, mark \\[location inferred])
-   * 4–5 Ticker Headlines (each headline must be strictly 5–6 Marathi words, important points only)
-   * Main rewritten Script
-3. The rewritten script must:
-   * Have no grammar mistakes.
-   * Be clear, anchor-friendly, and attractive for listeners.
-   * Follow YouTube content rules (no hate speech, no abusive words, no personal addresses, no copyright violation).
-4. After rewriting the script, calculate the word count and include it in the 'wordCount' field.
+2.  **Extract Key Information:**
+    *   **प्रतिनिधी:** Use this exact word. If a reporter's name isn't provided, leave this field blank.
+    *   **लोकेशन:** Provide the location in a "City - District" format if possible. The location should be realistically inferred from the script. If the location is unknown, mark it as '[location inferred]'.
+    *   **Ticker Headlines:** Extract 4–5 key headlines. Each headline must be strictly 5–6 Marathi words and highlight the most important points of the news.
+    *   **Word Count:** After rewriting, accurately calculate the word count of the main rewritten script and provide it in the 'wordCount' field.
 
 Original Script: {{{originalScript}}}
 `,

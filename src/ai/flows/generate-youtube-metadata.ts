@@ -55,16 +55,16 @@ const generateYoutubeMetadataPrompt = ai.definePrompt({
   name: 'generateYoutubeMetadataPrompt',
   input: {schema: GenerateYoutubeMetadataInputSchema},
   output: {schema: GenerateYoutubeMetadataOutputSchema},
-  prompt: `You are a YouTube expert specializing in news content. Based on the provided Marathi news script, generate the following metadata to maximize its reach and engagement on YouTube.
+  prompt: `You are a YouTube expert specializing in news content. Your task is to create metadata that sounds natural and is written from a human perspective, not like an AI. Based on the provided Marathi news script, generate the following content to maximize its reach and engagement.
 
 News Script:
 {{{rewrittenScript}}}
 
 Your task is to provide:
-1.  **YouTube Title:** A viral, click-worthy title in Marathi, around 100 characters.
+1.  **YouTube Title:** A viral, click-worthy title in Marathi, around 100 characters. It should be compelling and human-like.
 2.  **Thumbnail Text:** Two short, attractive Marathi sentences that create curiosity and encourage clicks.
-3.  **Description:** A well-structured, SEO-friendly YouTube description of 300-450 words. It should include a mix of Marathi and English keywords relevant to the news. The description must include calls to action to like the video, subscribe to the channel, and leave a comment with their opinion. **Do not include any hashtags (#) in the description itself.**
-4.  **Tags:** A list of relevant Marathi and English tags to improve discoverability. Each tag should be a single word or a short phrase, separated by a comma.
+3.  **Description:** A well-structured, SEO-friendly YouTube description of 300-450 words. Write in a conversational and engaging tone. It should include a mix of Marathi and English keywords relevant to the news. The description must include calls to action to like the video, subscribe to the channel, and leave a comment with their opinion. **Do not include any hashtags (#) in the description itself.**
+4.  **Tags:** A list of relevant Marathi and English tags to improve discoverability. Each tag should be a single word or a short phrase.
 5.  **Hashtags:** A list of relevant hashtags, including some in English.`,
 });
 
