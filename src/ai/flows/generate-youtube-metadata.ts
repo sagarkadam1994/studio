@@ -63,7 +63,7 @@ News Script:
 Your task is to provide:
 1.  **YouTube Title:** A viral, click-worthy title in Marathi, around 100 characters.
 2.  **Thumbnail Text:** Two short, attractive Marathi sentences that create curiosity and encourage clicks.
-3.  **Description:** A well-structured, SEO-friendly YouTube description of 300-450 words. It should include a mix of Marathi and English keywords relevant to the news. The description must include calls to action to like the video, subscribe to the channel, and leave a comment with their opinion.
+3.  **Description:** A well-structured, SEO-friendly YouTube description of 300-450 words. It should include a mix of Marathi and English keywords relevant to the news. The description must include calls to action to like the video, subscribe to the channel, and leave a comment with their opinion. **Do not include any hashtags (#) in the description itself.**
 4.  **Tags:** A list of relevant Marathi and English tags to improve discoverability. Each tag should be a single word or a short phrase, separated by a comma.
 5.  **Hashtags:** A list of relevant hashtags, including some in English.`,
 });
