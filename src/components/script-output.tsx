@@ -16,7 +16,6 @@ import {
   ClipboardCopy,
   UploadCloud,
   Loader2,
-  Settings,
 } from 'lucide-react';
 import { useState } from 'react';
 import { type OutputData } from '@/app/page';
@@ -31,7 +30,7 @@ import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { postToWebsiteAction, testConnectionAction } from '@/app/actions';
+import { postToWebsiteAction } from '@/app/actions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,7 +59,6 @@ interface PostResult {
 export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
   const { toast } = useToast();
   const [isPosting, setIsPosting] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [postResult, setPostResult] = useState<PostResult | null>(null);
 
@@ -122,30 +120,6 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
       setIsPosting(false);
     }
   };
-
-  const handleTestConnection = async () => {
-    setIsTesting(true);
-    setPostResult(null);
-    try {
-      const result = await testConnectionAction();
-      // The action now consistently returns a 'data' object, even on failure.
-      if (result.data) {
-        setPostResult(result.data);
-      } else {
-        // Fallback for unexpected action structure
-        setPostResult({ 
-            success: false, 
-            message: 'Connection Test Failed', 
-            details: (result as any).error || 'The server action returned an invalid response.' 
-        });
-      }
-    } catch (e: any) {
-        setPostResult({ success: false, message: 'Connection Test Failed', details: e.message || 'An unknown client-side error occurred.' });
-    } finally {
-      setIsTesting(false);
-    }
-  };
-  
 
   const createCopyText = {
     script: (output: OutputData) =>
@@ -409,24 +383,6 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
                 >
                   <ClipboardCopy className="mr-2 h-4 w-4" />
                   सर्व वेबसाइट माहिती कॉपी करा
-                </Button>
-                <Button
-                    onClick={handleTestConnection}
-                    disabled={isTesting}
-                    variant="secondary"
-                    className="w-full"
-                >
-                    {isTesting ? (
-                        <>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            Testing...
-                        </>
-                    ) : (
-                        <>
-                            <Settings className="mr-2 h-5 w-5" />
-                            Test Connection
-                        </>
-                    )}
                 </Button>
               </div>
                {postResult && (
