@@ -29,35 +29,31 @@ export async function generateScriptAndHeadlinesAction(
 export async function postToWebsiteAction(websiteData: CreateWebsitePostInput) {
   try {
     const result = await createWebsitePost(websiteData);
-    // The 'createWebsitePost' flow now directly returns the tool output.
-    // We just pass it along to the client.
     if (!result.success) {
-        return { error: result.message, details: result.details };
+        return { error: result.message, data: result };
     }
     return { data: result };
   } catch (error: any) {
     console.error('Error in postToWebsiteAction:', error);
-    // This catch block might be redundant if the tool handles all errors, but it's safe to keep.
     return {
       error: 'An unexpected error occurred in postToWebsiteAction.',
-      details: error.message,
+      data: {
+          success: false,
+          message: 'An unexpected error occurred in postToWebsiteAction.',
+          details: error.message,
+      },
     };
   }
 }
 
 export async function testConnectionAction() {
     try {
-        // The tool now returns a consistent object for success and failure.
-        // We will pass this object directly to the client.
         const result = await testWebsiteConnectionTool({});
         return { data: result };
     } catch (error: any) {
-        // This block will now only catch very unexpected exceptions, 
-        // as the tool itself is designed to not throw but return an error object.
         console.error('Exception in testConnectionAction:', error);
         return {
              error: 'An unexpected exception occurred during the connection test action.',
-             details: error.message,
              data: {
               success: false,
               message: 'An unexpected exception occurred during the connection test action.',

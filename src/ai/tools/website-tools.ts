@@ -172,7 +172,6 @@ export const postToWebsiteTool = ai.defineTool(
             // This block intentionally left empty. If JSON parsing fails, we use the raw responseText.
         }
         console.error('WordPress API Error Details:', errorMessage, errorDetails);
-        // Throw the most specific error message possible.
         throw new Error(errorMessage);
       }
 
@@ -233,14 +232,11 @@ export const testWebsiteConnectionTool = ai.defineTool(
       if (!response.ok) {
         let errorMessage = `Failed to connect. Status: ${response.status}.`;
         try {
-          // Try to parse JSON for a more specific error message.
           const errorBody = JSON.parse(responseText);
           errorMessage = `Connection failed: ${errorBody.message || 'No specific message.'}`;
         } catch {
-           // If it's not JSON, the raw text is the best detail we have.
            errorMessage = `Connection failed with a non-JSON response. Status: ${response.status}.`;
         }
-        // Return a structured error object that will be passed back.
         return {
           success: false,
           message: errorMessage,
@@ -248,7 +244,6 @@ export const testWebsiteConnectionTool = ai.defineTool(
         };
       }
       
-      // If response.ok, try to parse as JSON.
       try {
         const data: any[] = JSON.parse(responseText);
         console.log(`Connection test successful. Found ${data.length} categories.`);
@@ -257,7 +252,6 @@ export const testWebsiteConnectionTool = ai.defineTool(
           message: `Connection successful! Found ${data.length} categories.`,
         };
       } catch (error) {
-           // This case is unlikely if response.ok is true, but good to handle.
            return {
                 success: false,
                 message: 'Connection test succeeded, but the response was not valid JSON.',
@@ -266,7 +260,6 @@ export const testWebsiteConnectionTool = ai.defineTool(
       }
 
     } catch (error: any) {
-      // This catches exceptions from the fetch call itself (e.g., network errors).
       console.error('Exception during connection test:', error);
       return {
         success: false,
