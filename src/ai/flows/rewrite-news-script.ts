@@ -10,12 +10,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import {
-  generateYoutubeMetadata,
-} from './generate-youtube-metadata';
-import {
-  generateWebsiteArticle,
-} from './generate-website-article';
 
 const RewriteNewsScriptInputSchema = z.object({
   originalScript: z
@@ -92,32 +86,41 @@ export async function rewriteNewsScript(
 const prompt = ai.definePrompt({
   name: 'rewriteNewsScriptPrompt',
   input: {schema: RewriteNewsScriptInputSchema},
-  output: {schema: z.object({
-    rewrittenScript: z.string(),
-    reporterName: z.string(),
-    location: z.string(),
-    headlines: z.array(z.string()),
-    wordCount: z.number(),
-  })},
-  prompt: `You are a professional Marathi news editor with years of experience in a fast-paced newsroom. Your goal is to rewrite a given script so that it sounds like it was written by a seasoned human journalist, not a generic AI.
+  output: {schema: RewriteNewsScriptOutputSchema},
+  prompt: `You are a professional Marathi news editor and content strategist with years of experience in a fast-paced newsroom. Your goal is to take a raw news script and transform it into a complete, ready-to-publish content package for multiple platforms. The tone must be professional, engaging, and clear, as if written by a seasoned human journalist, not a generic AI.
 
 You will receive ONLY the original Marathi news script as input.
 
-Your job:
-
-1.  **Rewrite the Script:**
-    *   Target a length of 150–200 Marathi words.
-    *   The style must be professional, engaging, and clear for a news anchor to read. Avoid robotic or overly formal language. Use natural-sounding Marathi that captures the essence of the news.
-    *   Ensure perfect grammar and sentence structure.
-    *   Strictly adhere to YouTube content policies (no hate speech, no abusive language, no personal attacks, no copyright infringement).
-
-2.  **Extract Key Information:**
-    *   **प्रतिनिधी:** Use this exact word. If a reporter's name isn't provided, leave this field blank.
-    *   **लोकेशन:** Provide the location in a "City - District" format if possible. The location should be realistically inferred from the script. If the location is unknown, mark it as '[location inferred]'.
-    *   **Ticker Headlines:** Extract 4–5 key headlines. Each headline must be strictly 5–6 Marathi words and highlight the most important points of the news.
-    *   **Word Count:** After rewriting, accurately calculate the word count of the main rewritten script and provide it in the 'wordCount' field.
-
 Original Script: {{{originalScript}}}
+
+Your comprehensive task is to generate the following, ensuring all text sounds natural and human-like:
+
+**1. Core Script Rewrite:**
+    *   **Rewrite the Script:**
+        *   Target a length of 150–200 Marathi words.
+        *   The style must be professional and clear for a news anchor to read. Avoid robotic or overly formal language.
+        *   Ensure perfect grammar and sentence structure.
+        *   Strictly adhere to content policies (no hate speech, abusive language, personal attacks).
+    *   **Extract Key Information:**
+        *   **प्रतिनिधी (Reporter Name):** Use this exact word. If a reporter's name isn't provided, leave this field blank.
+        *   **लोकेशन (Location):** Provide the location in a "City - District" format if possible. Infer it realistically from the script. If unknown, mark it as '[location inferred]'.
+        *   **Ticker Headlines:** Extract 4–5 key headlines. Each headline must be strictly 5–6 Marathi words.
+        *   **Word Count:** Accurately count the words in the final rewritten script.
+
+**2. YouTube Metadata:**
+    *   **YouTube Title:** Create a viral, click-worthy title in Marathi, around 100 characters.
+    *   **Thumbnail Text:** Write two short, attractive Marathi sentences to create curiosity.
+    *   **Description:** Write a well-structured, SEO-friendly YouTube description (300-450 words) with a conversational tone. Include a mix of Marathi and English keywords. The description must include calls to action (like, subscribe, comment). **Do not include any hashtags (#) in the description itself.**
+    *   **Tags:** Provide a list of relevant Marathi and English tags (single words or short phrases).
+    *   **Hashtags:** Provide a list of relevant hashtags, including some in English.
+
+**3. Website Article:**
+    *   **Title:** Write an SEO-friendly title in Marathi that is also engaging.
+    *   **Permalink:** Create a URL-friendly permalink (slug) from the title (English, lowercase, hyphenated).
+    *   **Article:** Write a detailed, SEO-friendly article (400-600 words). It should be primarily in Marathi but include relevant English keywords naturally. Write in a compelling, narrative style.
+    *   **Tags:** Provide a list of relevant tags for the article.
+    *   **Category:** Provide a relevant category for the article.
+    *   **Word Count:** Provide the total word count of the generated website article.
 `,
 });
 
@@ -130,26 +133,17 @@ const rewriteNewsScriptFlow = ai.defineFlow(
   async input => {
     const {output} = await prompt(input);
 
-    const rewrittenScript =
-      output?.rewrittenScript?.replace(/Reporter/g, 'प्रतिनिधी') ?? '';
-    const headlines = output?.headlines ?? [];
-    const reporterName = output?.reporterName ?? '';
-    const location = output?.location ?? '';
-    const wordCount = output?.wordCount ?? 0;
-
-    const [youtube, website] = await Promise.all([
-      generateYoutubeMetadata({ rewrittenScript }),
-      generateWebsiteArticle({ rewrittenScript })
-    ]);
-
-    return {
-      rewrittenScript,
-      headlines,
-      reporterName,
-      location,
-      wordCount,
-      youtube,
-      website,
+    if (!output) {
+      throw new Error("The AI model failed to return a valid output.");
+    }
+    
+    // The output from the single prompt should now contain everything.
+    // We can perform any additional transformations here if needed.
+    const finalOutput = {
+      ...output,
+      rewrittenScript: output.rewrittenScript.replace(/Reporter/g, 'प्रतिनिधी'),
     };
+
+    return finalOutput;
   }
 );
