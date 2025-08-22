@@ -7,7 +7,9 @@ import fetch from 'node-fetch';
 const WP_URL = process.env.WP_URL;
 const WP_USER = process.env.WP_USER;
 const WP_PASSWORD = process.env.WP_PASSWORD;
-const WP_API_BASE = `${WP_URL}/wp-json/wp/v2`;
+
+// Remove trailing slash from WP_URL if it exists to prevent double slashes
+const WP_API_BASE = `${WP_URL?.replace(/\/$/, '')}/wp-json/wp/v2`;
 
 const getAuthHeader = () => {
   if (!WP_USER || !WP_PASSWORD) {
@@ -190,82 +192,6 @@ export const postToWebsiteTool = ai.defineTool(
           message: error.message || 'An unexpected error occurred while posting to the website.',
           details: error.stack
         };
-    }
-  }
-);
-
-
-export const testWebsiteConnectionTool = ai.defineTool(
-  {
-    name: 'testWebsiteConnectionTool',
-    description:
-      'Tests the connection to the WordPress website by fetching categories.',
-    inputSchema: z.object({}),
-    outputSchema: z.object({
-      success: z.boolean(),
-      message: z.string(),
-      details: z.string().optional(),
-    }),
-  },
-  async () => {
-    if (!WP_URL || !WP_USER || !WP_PASSWORD) {
-      return {
-        success: false,
-        message: 'Website credentials are not configured.',
-      };
-    }
-
-    try {
-      const authHeader = getAuthHeader();
-      const endpoint = `${WP_API_BASE}/categories`;
-      console.log(`Testing connection to: ${endpoint}`);
-
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          Authorization: authHeader,
-        },
-      });
-      
-      const responseText = await response.text();
-
-      if (!response.ok) {
-        let errorMessage = `Failed to connect. Status: ${response.status}.`;
-        try {
-          const errorBody = JSON.parse(responseText);
-          errorMessage = `Connection failed: ${errorBody.message || 'No specific message.'}`;
-        } catch {
-           errorMessage = `Connection failed with a non-JSON response. Status: ${response.status}.`;
-        }
-        return {
-          success: false,
-          message: errorMessage,
-          details: `URL: ${endpoint}\nStatus: ${response.status}\nRaw Response:\n\n${responseText}`,
-        };
-      }
-      
-      try {
-        const data: any[] = JSON.parse(responseText);
-        console.log(`Connection test successful. Found ${data.length} categories.`);
-        return {
-          success: true,
-          message: `Connection successful! Found ${data.length} categories.`,
-        };
-      } catch (error) {
-           return {
-                success: false,
-                message: 'Connection test succeeded, but the response was not valid JSON.',
-                details: `The server responded with status ${response.status}, but the body could not be parsed as JSON. Raw response:\n\n${responseText}`
-           }
-      }
-
-    } catch (error: any) {
-      console.error('Exception during connection test:', error);
-      return {
-        success: false,
-        message: 'An unexpected exception occurred during the connection test.',
-        details: error.message || 'No details available.',
-      };
     }
   }
 );

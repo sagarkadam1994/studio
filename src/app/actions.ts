@@ -3,10 +3,8 @@
 import {
   rewriteNewsScript,
   type RewriteNewsScriptInput,
-  type RewriteNewsScriptOutput,
 } from '@/ai/flows/rewrite-news-script';
 import { createWebsitePost, type CreateWebsitePostInput } from '@/ai/flows/create-website-post';
-import { testWebsiteConnectionTool } from '@/ai/tools/website-tools';
 
 export async function generateScriptAndHeadlinesAction(
   input: RewriteNewsScriptInput
@@ -44,21 +42,4 @@ export async function postToWebsiteAction(websiteData: CreateWebsitePostInput) {
       },
     };
   }
-}
-
-export async function testConnectionAction() {
-    try {
-        const result = await testWebsiteConnectionTool({});
-        return { data: result };
-    } catch (error: any) {
-        console.error('Exception in testConnectionAction:', error);
-        return {
-             error: 'An unexpected exception occurred during the connection test action.',
-             data: {
-              success: false,
-              message: 'An unexpected exception occurred during the connection test action.',
-              details: error.message,
-            }
-        };
-    }
 }
