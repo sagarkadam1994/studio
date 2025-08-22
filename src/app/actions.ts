@@ -28,10 +28,10 @@ export async function postToWebsiteAction(websiteData: CreateWebsitePostInput) {
   try {
     const result = await createWebsitePost(websiteData);
     if (!result.success) {
-        return { error: result.message, data: result };
+      return { error: result.message, data: result };
     }
     return { data: result };
-  } catch (error: any) {
+  } catch (error: any) { // Catching as any to access message property
     console.error('Error in postToWebsiteAction:', error);
     return {
       error: 'An unexpected error occurred in postToWebsiteAction.',
