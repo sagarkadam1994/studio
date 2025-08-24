@@ -2,20 +2,26 @@
 
 import {
   rewriteNewsScript,
-  type RewriteNewsScriptInput,
+  type RewriteNewsScriptOutput,
 } from '@/ai/flows/rewrite-news-script';
-import { createWebsitePost, type CreateWebsitePostInput } from '@/ai/flows/create-website-post';
+import { postToWebsiteTool } from '@/ai/tools/website-tools';
+import { type z } from 'zod';
+
+// Define a type for the website post data based on the tool's input schema
+// This avoids importing from the tool file directly in the consuming components
+// which can sometimes cause issues.
+type CreateWebsitePostInput = z.infer<typeof postToWebsiteTool.inputSchema>;
 
 export async function generateScriptAndHeadlinesAction(
-  input: RewriteNewsScriptInput
+  input: { originalScript: string }
 ) {
   try {
-    const { rewrittenScript, headlines, reporterName, location, wordCount, youtube, website } = await rewriteNewsScript(input);
-    if (!rewrittenScript) {
+    const data = await rewriteNewsScript(input);
+    if (!data) {
       throw new Error('स्क्रिप्ट पुन्हा लिहिण्यात अयशस्वी.');
     }
 
-    return { data: { rewrittenScript, headlines, reporterName, location, wordCount, youtube, website } };
+    return { data };
   } catch (error) {
     console.error(error);
     return {
@@ -26,9 +32,9 @@ export async function generateScriptAndHeadlinesAction(
 
 export async function postToWebsiteAction(websiteData: CreateWebsitePostInput) {
   try {
-    const result = await createWebsitePost(websiteData);
-    // The result from a tool/flow call is the output object itself.
-    // We need to check the 'success' property on it.
+    // Directly call the tool. No need for an intermediate flow.
+    const result = await postToWebsiteTool(websiteData);
+    
     if (!result.success) {
       // Pass the detailed message and details from the tool's output back to the client.
       return { 
@@ -39,7 +45,7 @@ export async function postToWebsiteAction(websiteData: CreateWebsitePostInput) {
     return { data: result };
   } catch (error: any) { 
     console.error('Fatal Error in postToWebsiteAction:', error);
-    // This will catch errors if the createWebsitePost flow itself fails to execute.
+    // This will catch errors if the tool itself throws an unhandled exception.
     return {
       error: 'An unexpected error occurred while calling the post action.',
       data: {
