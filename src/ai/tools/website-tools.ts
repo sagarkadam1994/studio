@@ -43,63 +43,96 @@ async function getOrCreateTermId(
     );
 
     if (searchResponse.ok) {
+      try {
         const existingTerms: any[] = await searchResponse.json();
         const exactMatch = existingTerms.find(
-            (t) => t.name.toLowerCase() === term.toLowerCase()
+          t => t.name.toLowerCase() === term.toLowerCase()
         );
         if (exactMatch) {
-            console.log(`Found existing ${taxonomy} '${term}' with ID ${exactMatch.id}.`);
-            return exactMatch.id;
+          console.log(
+            `Found existing ${taxonomy} '${term}' with ID ${exactMatch.id}.`
+          );
+          return exactMatch.id;
         }
+      } catch (e: any) {
+        console.warn(
+          `Failed to parse JSON from search response for ${taxonomy} '${term}'. Error: ${
+            e.message
+          }. Body: ${await searchResponse.text()}.`
+        );
+        // Continue to creation attempt
+      }
     } else {
-       const errorText = await searchResponse.text();
-       console.warn(`Failed to search for ${taxonomy} '${term}'. Status: ${searchResponse.status}. Body: ${errorText}. Skipping creation.`);
-       // If search fails, skip creation and fallback
+      const errorText = await searchResponse.text();
+      console.warn(
+        `Failed to search for ${taxonomy} '${term}'. Status: ${searchResponse.status}. Body: ${errorText}. Skipping creation.`
+      );
+      // If search fails, skip creation and fallback
     }
-
 
     // 2. If not found, create it
-    console.log(`'${term}' not found. Attempting to create it as a new ${taxonomy}.`);
+    console.log(
+      `'${term}' not found. Attempting to create it as a new ${taxonomy}.`
+    );
     const createResponse = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: authHeader,
-        },
-        body: JSON.stringify({ name: term }),
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: authHeader,
+      },
+      body: JSON.stringify({name: term}),
     });
 
+    const responseText = await createResponse.text();
     if (createResponse.ok) {
-        const newTerm: any = await createResponse.json();
-        console.log(`Successfully created ${taxonomy} '${term}' with ID ${newTerm.id}`);
+      try {
+        const newTerm: any = JSON.parse(responseText);
+        console.log(
+          `Successfully created ${taxonomy} '${term}' with ID ${newTerm.id}`
+        );
         return newTerm.id;
+      } catch (e: any) {
+        console.error(
+          `Failed to parse JSON from create response for ${taxonomy} '${term}'. Error: ${e.message}. Body: ${responseText}`
+        );
+      }
     }
 
-    const errorText = await createResponse.text();
     try {
-        const errorBody = JSON.parse(errorText);
-        // If creation fails because it already exists (a common race condition or search issue)
-        if (errorBody.code === 'term_exists' && errorBody.data?.term_id) {
-            const existingId = errorBody.data.term_id;
-            console.log(`Term '${term}' already exists with ID ${existingId} (detected on creation). Using it.`);
-            return existingId;
-        }
-        console.error(`Failed to create ${taxonomy} '${term}'. Status: ${createResponse.status}, Reason: ${errorBody.message || 'Unknown'}`);
+      const errorBody = JSON.parse(responseText);
+      // If creation fails because it already exists (a common race condition or search issue)
+      if (errorBody.code === 'term_exists' && errorBody.data?.term_id) {
+        const existingId = errorBody.data.term_id;
+        console.log(
+          `Term '${term}' already exists with ID ${existingId} (detected on creation). Using it.`
+        );
+        return existingId;
+      }
+      console.error(
+        `Failed to create ${taxonomy} '${term}'. Status: ${
+          createResponse.status
+        }, Reason: ${errorBody.message || 'Unknown'}`
+      );
     } catch (e) {
-        console.error(`Failed to create ${taxonomy} '${term}'. Status: ${createResponse.status}. Non-JSON response: ${errorText}`);
+      console.error(
+        `Failed to create ${taxonomy} '${term}'. Status: ${createResponse.status}. Non-JSON response: ${responseText}`
+      );
     }
-
-
   } catch (error: any) {
-    console.error(`An unexpected error occurred while processing ${taxonomy} '${term}':`, error.message);
+    console.error(
+      `An unexpected error occurred while processing ${taxonomy} '${term}':`,
+      error.message
+    );
   }
 
   // 3. Fallback logic
   if (taxonomy === 'categories') {
-    console.log(`Using default category 'Uncategorized' as a fallback for '${term}'.`);
+    console.log(
+      `Using default category 'Uncategorized' as a fallback for '${term}'.`
+    );
     return DEFAULT_CATEGORY_ID;
   }
-  
+
   // For tags, if we reach here, it means we couldn't find or create it. Skip it.
   console.log(`Skipping tag '${term}' due to processing errors.`);
   return null;
@@ -114,9 +147,7 @@ export const postToWebsiteTool = ai.defineTool(
       permalink: z.string().describe('The URL slug for the article.'),
       article: z.string().describe('The full HTML content of the article.'),
       tags: z.array(z.string()).describe('An array of tags for the article.'),
-      category: z
-        .string()
-        .describe('The primary category for the article.'),
+      category: z.string().describe('The primary category for the article.'),
     }),
     outputSchema: z.object({
       success: z.boolean(),
@@ -127,12 +158,12 @@ export const postToWebsiteTool = ai.defineTool(
   },
   async input => {
     if (!WP_URL || !WP_USER || !WP_PASSWORD) {
-       return {
+      return {
         success: false,
         message: 'Website credentials are not configured.',
       };
     }
-    
+
     try {
       const authHeader = getAuthHeader();
 
@@ -140,9 +171,13 @@ export const postToWebsiteTool = ai.defineTool(
       console.log('Processing category...');
       const categoryId = await getOrCreateTermId(input.category, 'categories');
       console.log('Processing tags...');
-      const tagIdPromises = input.tags.map(tag => getOrCreateTermId(tag, 'tags'));
-      const tagIds = (await Promise.all(tagIdPromises)).filter((id): id is number => id !== null);
-      
+      const tagIdPromises = input.tags.map(tag =>
+        getOrCreateTermId(tag, 'tags')
+      );
+      const tagIds = (await Promise.all(tagIdPromises)).filter(
+        (id): id is number => id !== null
+      );
+
       const postData: any = {
         title: input.title,
         slug: input.permalink,
@@ -152,7 +187,10 @@ export const postToWebsiteTool = ai.defineTool(
         tags: tagIds,
       };
 
-      console.log('Posting data to WordPress:', JSON.stringify(postData, null, 2));
+      console.log(
+        'Posting data to WordPress:',
+        JSON.stringify(postData, null, 2)
+      );
 
       const response = await fetch(`${WP_API_BASE}/posts`, {
         method: 'POST',
@@ -168,10 +206,12 @@ export const postToWebsiteTool = ai.defineTool(
         let errorMessage = `An unknown error occurred while posting. Status: ${response.status}.`;
         let errorDetails = `Raw Response: ${responseText}`;
         try {
-            const errorBody = JSON.parse(responseText);
-            errorMessage = `WordPress API Error: ${errorBody.message || 'No specific message.'} (Code: ${errorBody.code || 'N/A'})`;
+          const errorBody = JSON.parse(responseText);
+          errorMessage = `WordPress API Error: ${
+            errorBody.message || 'No specific message.'
+          } (Code: ${errorBody.code || 'N/A'})`;
         } catch {
-            // This block intentionally left empty. If JSON parsing fails, we use the raw responseText.
+          // This block intentionally left empty. If JSON parsing fails, we use the raw responseText.
         }
         console.error('WordPress API Error Details:', errorMessage, errorDetails);
         throw new Error(errorMessage);
@@ -187,11 +227,13 @@ export const postToWebsiteTool = ai.defineTool(
       };
     } catch (error: any) {
       console.error('Error in postToWebsiteTool:', error);
-       return {
-          success: false,
-          message: error.message || 'An unexpected error occurred while posting to the website.',
-          details: error.stack
-        };
+      return {
+        success: false,
+        message:
+          error.message ||
+          'An unexpected error occurred while posting to the website.',
+        details: error.stack,
+      };
     }
   }
 );
