@@ -1,98 +1,96 @@
-"use client";
+'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Loader2, Edit } from "lucide-react";
+import {useState, useTransition} from 'react';
+import {z} from 'zod';
+import {useForm, Controller} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
+import {Textarea} from '@/components/ui/textarea';
+import {Button} from '@/components/ui/button';
+import {generateScript} from '@/app/actions';
+import {useToast} from '@/hooks/use-toast';
+import {ToastAction} from './ui/toast';
 
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
-const formSchema = z.object({
-  script: z
+const FormSchema = z.object({
+  originalScript: z
     .string()
-    .min(50, { message: "कृपया किमान ५० अक्षरांची स्क्रिप्ट टाका." }),
+    .min(10, {message: 'कृपया किमान १० शब्द लिहा.'})
+    .max(1000, {message: 'तुम्ही १००० पेक्षा जास्त शब्द लिहू शकत नाही.'}),
 });
 
-export type ScriptFormData = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof FormSchema>;
 
 interface ScriptFormProps {
-  onSubmit: (data: ScriptFormData) => void;
-  isLoading: boolean;
+  onFormSubmit: (output: any) => void;
 }
 
-export function ScriptForm({ onSubmit, isLoading }: ScriptFormProps) {
-  const form = useForm<ScriptFormData>({
-    resolver: zodResolver(formSchema),
+export function ScriptForm({onFormSubmit}: ScriptFormProps) {
+  const [isPending, startTransition] = useTransition();
+  const {toast} = useToast();
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(FormSchema),
     defaultValues: {
-      script: "",
+      originalScript: '',
     },
   });
 
+  const onSubmit = (data: FormValues) => {
+    startTransition(async () => {
+      const result = await generateScript(data.originalScript);
+
+      if ('error' in result) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: result.error,
+          action: <ToastAction altText="Try again">Try again</ToastAction>,
+        });
+      } else {
+        onFormSubmit(result.output);
+      }
+    });
+  };
+
   return (
-    <Card className="w-full shadow-lg border-2 border-border/60">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-                <Edit className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex flex-col">
-                <CardTitle className="font-headline text-2xl">इनपुट स्क्रिप्ट</CardTitle>
-                <CardDescription>तुमची बातमी स्क्रिप्ट टाका.</CardDescription>
-            </div>
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="p-6 space-y-4">
+          <div className="flex flex-col space-y-1.5">
+            <label
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              htmlFor="originalScript"
+            >
+              इनपुट स्क्रिप्ट
+            </label>
+            <p className="text-sm text-muted-foreground">
+              तुमची बातमी स्क्रिप्ट टाका.
+            </p>
+          </div>
+          <Controller
+            control={form.control}
+            name="originalScript"
+            render={({field}) => (
+              <Textarea
+                {...field}
+                id="originalScript"
+                placeholder="स्क्रिप्ट"
+                className="resize-none"
+                rows={10}
+              />
+            )}
+          />
+          {form.formState.errors.originalScript && (
+            <p className="text-sm font-medium text-destructive">
+              {form.formState.errors.originalScript.message}
+            </p>
+          )}
         </div>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="script"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">स्क्रिप्ट</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="तुमची मूळ स्क्रिप्ट येथे पेस्ट करा..."
-                      className="resize-y min-h-[200px] text-base"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={isLoading} className="w-full text-lg py-6">
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  जनरेट करत आहे...
-                </>
-              ) : (
-                "पुन्हा लिहा आणि हेडलाइन मिळवा"
-              )}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+        <div className="flex items-center p-6 pt-0">
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? 'Generating...' : 'पुन्हा लिहा आणि हेडलाईन मिळवा'}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

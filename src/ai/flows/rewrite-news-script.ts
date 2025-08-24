@@ -134,13 +134,21 @@ const rewriteNewsScriptFlow = ai.defineFlow(
     const {output} = await prompt(input);
 
     if (!output) {
-      throw new Error("The AI model failed to return a valid output.");
+      throw new Error('The AI model failed to return a valid output.');
     }
-    
-    // The output from the single prompt should now contain everything.
-    // We can perform any additional transformations here if needed.
+
+    // Clean up the reporterName field to remove any prefixes.
+    let cleanedReporterName = output.reporterName;
+    const prefixesToRemove = ['Reporter:', 'Reporter', 'प्रतिनिधी:', 'प्रतिनिधी'];
+    for (const prefix of prefixesToRemove) {
+      if (cleanedReporterName.startsWith(prefix)) {
+        cleanedReporterName = cleanedReporterName.substring(prefix.length).trim();
+      }
+    }
+
     const finalOutput = {
       ...output,
+      reporterName: cleanedReporterName,
       rewrittenScript: output.rewrittenScript.replace(/Reporter/g, 'प्रतिनिधी'),
     };
 
