@@ -1,6 +1,7 @@
 'use client';
 
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
+import dynamic from 'next/dynamic';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
 import {
@@ -12,8 +13,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {Badge} from '@/components/ui/badge';
-import Confetti from 'react-confetti';
 import {Button} from './ui/button';
+
+const Confetti = dynamic(() => import('react-confetti'), {ssr: false});
 
 interface ScriptOutputProps {
   output: {
@@ -42,6 +44,13 @@ interface ScriptOutputProps {
 
 export function ScriptOutput({output}: ScriptOutputProps) {
   const [showConfetti, setShowConfetti] = useState(true);
+  const [width, setWidth] = useState(0);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    setWidth(window.innerWidth);
+    setHeight(window.innerHeight);
+  }, []);
 
   if (!output) {
     return (
@@ -65,8 +74,8 @@ export function ScriptOutput({output}: ScriptOutputProps) {
     <div className="relative">
       {showConfetti && (
         <Confetti
-          width={window.innerWidth}
-          height={window.innerHeight}
+          width={width}
+          height={height}
           recycle={false}
           onConfettiComplete={() => setShowConfetti(false)}
         />
