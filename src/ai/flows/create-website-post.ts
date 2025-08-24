@@ -26,12 +26,6 @@ const createWebsitePostFlow = ai.defineFlow(
     name: 'createWebsitePostFlow',
     inputSchema: CreateWebsitePostInputSchema,
     outputSchema: CreateWebsitePostOutputSchema,
-    middleware: async (req, next) => {
-      res.header('Access-Control-Allow-Origin', '*');
-      res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      return next(req);
-    },
   },
   async (input) => {
     // This flow will now directly call the tool.
