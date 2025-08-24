@@ -1,142 +1,141 @@
 'use server';
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-import fetch from 'node-fetch';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
+import fetch, { Response } from 'node-fetch';
 
-const WP_URL = process.env.WP_URL;
-const WP_USER = process.env.WP_USER;
-const WP_PASSWORD = process.env.WP_PASSWORD;
+// --- CONFIGURATION ---
+const { WP_URL, WP_USER, WP_PASSWORD } = process.env;
+const WP_API_BASE = `${WP_URL?.replace(/\/$/, '') || ''}/wp-json/wp/v2`;
 
-// Remove trailing slash from WP_URL if it exists to prevent double slashes
-const WP_API_BASE = `${WP_URL?.replace(/\/$/, '')}/wp-json/wp/v2`;
-
-const getAuthHeader = () => {
-  if (!WP_USER || !WP_PASSWORD) {
-    throw new Error(
-      'WordPress username or password not configured in environment variables.'
-    );
+// --- CUSTOM ERROR ---
+class WordPressApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code?: string,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'WordPressApiError';
   }
-  const buffer = Buffer.from(`${WP_USER}:${WP_PASSWORD}`);
-  const basicAuth = buffer.toString('base64');
-  return `Basic ${basicAuth}`;
+}
+
+// --- API HELPERS ---
+
+/**
+ * Creates the Basic Authentication header.
+ * @throws {Error} if credentials are not set.
+ */
+const getAuthHeader = (): string => {
+  if (!WP_USER || !WP_PASSWORD) {
+    throw new Error('WordPress credentials not configured in environment variables.');
+  }
+  return `Basic ${Buffer.from(`${WP_USER}:${WP_PASSWORD}`).toString('base64')}`;
 };
 
-// Helper function to find or create a term (category or tag)
-async function getOrCreateTermId(
-  term: string,
-  taxonomy: 'categories' | 'tags'
-): Promise<number | null> {
-  if (!term?.trim()) return null;
-
-  const authHeader = getAuthHeader();
-  const endpoint = `${WP_API_BASE}/${taxonomy}`;
-  const DEFAULT_CATEGORY_ID = 1; // 'Uncategorized' is typically ID 1
+/**
+ * Centralized fetch wrapper for the WordPress API.
+ * Handles auth, JSON parsing, and structured error handling.
+ */
+async function wpFetch<T = any>(
+  endpoint: string,
+  options: { method?: string; body?: object } = {}
+): Promise<T> {
+  const { method = 'GET', body } = options;
+  let response: Response;
 
   try {
-    // 1. Search for existing term by name
-    const searchResponse = await fetch(
-      `${endpoint}?search=${encodeURIComponent(term)}&_fields=id,name`,
-      {
-        headers: {Authorization: authHeader},
-      }
-    );
+    response = await fetch(`${WP_API_BASE}${endpoint}`, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: getAuthHeader(),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (error: any) {
+    console.error(`Network error calling WordPress API at ${endpoint}:`, error);
+    throw new WordPressApiError(`Network error: ${error.message}`, 500);
+  }
 
-    if (searchResponse.ok) {
-      try {
-        const existingTerms: any[] = await searchResponse.json();
-        const exactMatch = existingTerms.find(
-          t => t.name.toLowerCase() === term.toLowerCase()
-        );
-        if (exactMatch) {
-          console.log(
-            `Found existing ${taxonomy} '${term}' with ID ${exactMatch.id}.`
-          );
-          return exactMatch.id;
-        }
-      } catch (e: any) {
-        console.warn(
-          `Failed to parse JSON from search response for ${taxonomy} '${term}'. Error: ${
-            e.message
-          }. Body: ${await searchResponse.text()}.`
-        );
-        // Continue to creation attempt
-      }
-    } else {
-      const errorText = await searchResponse.text();
-      console.warn(
-        `Failed to search for ${taxonomy} '${term}'. Status: ${searchResponse.status}. Body: ${errorText}. Skipping creation.`
-      );
-      // If search fails, skip creation and fallback
+  const responseText = await response.text();
+
+  if (!response.ok) {
+    let errorBody: any = {};
+    try {
+      errorBody = JSON.parse(responseText);
+    } catch { /* Ignore if response is not JSON */ }
+    
+    const errorMessage = errorBody.message || `API request failed with status ${response.status}.`;
+    console.error(`WordPress API Error (${response.status}) at ${endpoint}:`, responseText);
+    throw new WordPressApiError(errorMessage, response.status, errorBody.code, responseText);
+  }
+
+  try {
+    // Handle empty responses which are valid JSON (e.g., on DELETE)
+    return responseText ? (JSON.parse(responseText) as T) : ({} as T);
+  } catch (error) {
+    console.error(`Failed to parse successful JSON response from ${endpoint}:`, responseText);
+    throw new WordPressApiError('Invalid JSON response from API.', 502, 'invalid_json', responseText);
+  }
+}
+
+/**
+ * Gets the ID of a term (category or tag), creating it if it doesn't exist.
+ */
+async function getOrCreateTermId(
+  termName: string,
+  taxonomy: 'categories' | 'tags'
+): Promise<number | null> {
+  if (!termName?.trim()) return null;
+
+  const DEFAULT_CATEGORY_ID = 1; // 'Uncategorized'
+
+  try {
+    // 1. Search for the term by exact name
+    const terms = await wpFetch<{ id: number; name: string }[]>(
+      `/${taxonomy}?search=${encodeURIComponent(termName)}&_fields=id,name`
+    );
+    const existingTerm = terms.find(t => t.name.toLowerCase() === termName.toLowerCase());
+    if (existingTerm) {
+      console.log(`Found existing ${taxonomy} '${termName}' with ID ${existingTerm.id}.`);
+      return existingTerm.id;
     }
 
     // 2. If not found, create it
-    console.log(
-      `'${term}' not found. Attempting to create it as a new ${taxonomy}.`
-    );
-    const createResponse = await fetch(endpoint, {
+    console.log(`'${termName}' not found. Attempting to create as a new ${taxonomy}.`);
+    const newTerm = await wpFetch<{ id: number }>(`/${taxonomy}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: authHeader,
-      },
-      body: JSON.stringify({name: term}),
+      body: { name: termName },
     });
+    console.log(`Successfully created ${taxonomy} '${termName}' with ID ${newTerm.id}`);
+    return newTerm.id;
 
-    const responseText = await createResponse.text();
-    if (createResponse.ok) {
-      try {
-        const newTerm: any = JSON.parse(responseText);
-        console.log(
-          `Successfully created ${taxonomy} '${term}' with ID ${newTerm.id}`
-        );
-        return newTerm.id;
-      } catch (e: any) {
-        console.error(
-          `Failed to parse JSON from create response for ${taxonomy} '${term}'. Error: ${e.message}. Body: ${responseText}`
-        );
-      }
+  } catch (error) {
+    // 3. Handle race condition where term was created between search and create
+    if (error instanceof WordPressApiError && error.code === 'term_exists') {
+      console.log(`Term '${termName}' already exists (detected on creation). Re-fetching.`);
+      // Re-fetch to be certain we get the right one
+      const terms = await wpFetch<{ id: number; name: string }[]>(`/${taxonomy}?search=${encodeURIComponent(termName)}&_fields=id,name`);
+      const term = terms.find(t => t.name.toLowerCase() === termName.toLowerCase());
+      if (term) return term.id;
     }
-
-    try {
-      const errorBody = JSON.parse(responseText);
-      // If creation fails because it already exists (a common race condition or search issue)
-      if (errorBody.code === 'term_exists' && errorBody.data?.term_id) {
-        const existingId = errorBody.data.term_id;
-        console.log(
-          `Term '${term}' already exists with ID ${existingId} (detected on creation). Using it.`
-        );
-        return existingId;
-      }
-      console.error(
-        `Failed to create ${taxonomy} '${term}'. Status: ${
-          createResponse.status
-        }, Reason: ${errorBody.message || 'Unknown'}`
-      );
-    } catch (e) {
-      console.error(
-        `Failed to create ${taxonomy} '${term}'. Status: ${createResponse.status}. Non-JSON response: ${responseText}`
-      );
-    }
-  } catch (error: any) {
-    console.error(
-      `An unexpected error occurred while processing ${taxonomy} '${term}':`,
-      error.message
-    );
+    
+    console.error(`An error occurred while processing ${taxonomy} '${termName}':`, error);
   }
 
-  // 3. Fallback logic
+  // 4. Fallback logic
   if (taxonomy === 'categories') {
-    console.log(
-      `Using default category 'Uncategorized' as a fallback for '${term}'.`
-    );
+    console.log(`Using default category 'Uncategorized' as a fallback for '${termName}'.`);
     return DEFAULT_CATEGORY_ID;
   }
-
-  // For tags, if we reach here, it means we couldn't find or create it. Skip it.
-  console.log(`Skipping tag '${term}' due to processing errors.`);
+  
+  console.log(`Skipping tag '${termName}' due to processing errors.`);
   return null;
 }
+
+// --- GENKIT TOOL DEFINITION ---
 
 export const postToWebsiteTool = ai.defineTool(
   {
@@ -163,76 +162,48 @@ export const postToWebsiteTool = ai.defineTool(
         message: 'Website credentials are not configured.',
       };
     }
-
+    
     try {
-      const authHeader = getAuthHeader();
+      // 1. Process Categories and Tags
+      console.log('Processing category and tags...');
+      const [categoryId, ...tagIdResults] = await Promise.all([
+        getOrCreateTermId(input.category, 'categories'),
+        ...input.tags.map(tag => getOrCreateTermId(tag, 'tags'))
+      ]);
+      const tagIds = tagIdResults.filter((id): id is number => id !== null);
 
-      // Get or create category and tag IDs
-      console.log('Processing category...');
-      const categoryId = await getOrCreateTermId(input.category, 'categories');
-      console.log('Processing tags...');
-      const tagIdPromises = input.tags.map(tag =>
-        getOrCreateTermId(tag, 'tags')
-      );
-      const tagIds = (await Promise.all(tagIdPromises)).filter(
-        (id): id is number => id !== null
-      );
-
-      const postData: any = {
+      // 2. Prepare Post Data
+      const postData = {
         title: input.title,
         slug: input.permalink,
         content: input.article,
-        status: 'publish', // Or 'draft'
-        categories: categoryId ? [categoryId] : [1], // Fallback to 1 (Uncategorized)
+        status: 'publish' as const,
+        categories: categoryId ? [categoryId] : [1], // Fallback to 'Uncategorized'
         tags: tagIds,
       };
 
-      console.log(
-        'Posting data to WordPress:',
-        JSON.stringify(postData, null, 2)
-      );
+      console.log('Posting data to WordPress:', JSON.stringify(postData, null, 2));
 
-      const response = await fetch(`${WP_API_BASE}/posts`, {
+      // 3. Create Post
+      const newPost = await wpFetch<{ link: string }>(`/posts`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: authHeader,
-        },
-        body: JSON.stringify(postData),
+        body: postData,
       });
 
-      const responseText = await response.text();
-      if (!response.ok) {
-        let errorMessage = `An unknown error occurred while posting. Status: ${response.status}.`;
-        let errorDetails = `Raw Response: ${responseText}`;
-        try {
-          const errorBody = JSON.parse(responseText);
-          errorMessage = `WordPress API Error: ${
-            errorBody.message || 'No specific message.'
-          } (Code: ${errorBody.code || 'N/A'})`;
-        } catch {
-          // This block intentionally left empty. If JSON parsing fails, we use the raw responseText.
-        }
-        console.error('WordPress API Error Details:', errorMessage, errorDetails);
-        throw new Error(errorMessage);
-      }
-
-      const responseData: any = JSON.parse(responseText);
-      console.log('Successfully posted to WordPress:', responseData.link);
+      console.log('Successfully posted to WordPress:', newPost.link);
 
       return {
         success: true,
         message: 'Article posted successfully!',
-        url: responseData.link,
+        url: newPost.link,
       };
+
     } catch (error: any) {
-      console.error('Error in postToWebsiteTool:', error);
+      console.error('Fatal error in postToWebsiteTool:', error);
       return {
         success: false,
-        message:
-          error.message ||
-          'An unexpected error occurred while posting to the website.',
-        details: error.stack,
+        message: error.message || 'An unexpected error occurred while posting to the website.',
+        details: error instanceof WordPressApiError ? JSON.stringify({ status: error.status, code: error.code, details: error.details }, null, 2) : error.stack,
       };
     }
   }
