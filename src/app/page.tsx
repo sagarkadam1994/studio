@@ -8,20 +8,11 @@ import { ScriptForm, type ScriptFormData } from "@/components/script-form";
 import { ScriptOutput } from "@/components/script-output";
 import { generateScriptAndHeadlinesAction } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
-import { type GenerateYoutubeMetadataOutput } from "@/ai/flows/generate-youtube-metadata";
-import { type GenerateWebsiteArticleOutput } from "@/ai/flows/generate-website-article";
+import { type RewriteNewsScriptOutput } from "@/ai/flows/rewrite-news-script";
 import { Button } from "@/components/ui/button";
 import { HistorySidebar } from "@/components/history-sidebar";
 
-export interface OutputData {
-  rewrittenScript: string;
-  headlines: string[];
-  reporterName: string;
-  location: string;
-  wordCount: number;
-  youtube: GenerateYoutubeMetadataOutput;
-  website: GenerateWebsiteArticleOutput;
-}
+export type OutputData = RewriteNewsScriptOutput;
 
 export interface HistoryEntry {
   id: string;
