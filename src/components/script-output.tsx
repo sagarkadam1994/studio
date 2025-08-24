@@ -89,32 +89,36 @@ export function ScriptOutput({ output, isLoading }: ScriptOutputProps) {
 
     try {
       const result = await postToWebsiteAction(output.website);
-      if (result.data) {
+      
+      if (result.data?.success) {
         setPostResult(result.data);
-         if (result.data.success) {
-           toast({
-             title: 'यशस्वीरित्या पोस्ट केले!',
-             description: result.data.message,
-           });
-         } else {
-            // Even if data is present, success might be false
-            setPostResult({
-                success: false,
-                message: result.data.message || 'An error occurred.',
-                details: result.data.details
-            });
-         }
-      } else if (result.error) {
-         setPostResult({
-           success: false, 
-           message: result.error, 
-           details: (result as any).details || 'No additional details.'
-          });
+        toast({
+           title: 'यशस्वीरित्या पोस्ट केले!',
+           description: result.data.message,
+        });
       } else {
-         setPostResult({success: false, message: 'An unexpected error occurred.', details: 'The server action returned an empty response.'});
+         // This handles both result.error and result.data with success: false
+         const errorDetails = result.error || result.data?.message || 'An unknown error occurred.';
+         const errorStack = result.data?.details;
+         setPostResult({
+             success: false,
+             message: errorDetails,
+             details: errorStack,
+         });
+         toast({
+            variant: 'destructive',
+            title: 'पोस्ट करण्यात अयशस्वी',
+            description: errorDetails,
+         });
       }
     } catch (e: any) {
-      setPostResult({success: false, message: 'Failed to call the server action.', details: e.message || 'An unknown client-side error occurred.'});
+      const errorMessage = 'Failed to call the server action. An unexpected client-side error occurred.';
+      setPostResult({success: false, message: errorMessage, details: e.message });
+      toast({
+        variant: 'destructive',
+        title: 'त्रुटी',
+        description: errorMessage,
+      });
       console.error(e);
     } finally {
       setIsPosting(false);

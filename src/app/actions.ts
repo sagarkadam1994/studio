@@ -27,18 +27,25 @@ export async function generateScriptAndHeadlinesAction(
 export async function postToWebsiteAction(websiteData: CreateWebsitePostInput) {
   try {
     const result = await createWebsitePost(websiteData);
+    // The result from a tool/flow call is the output object itself.
+    // We need to check the 'success' property on it.
     if (!result.success) {
-      return { error: result.message, data: result };
+      // Pass the detailed message and details from the tool's output back to the client.
+      return { 
+        error: result.message, 
+        data: result // Send the whole result object for more context
+      };
     }
     return { data: result };
-  } catch (error: any) { // Catching as any to access message property
-    console.error('Error in postToWebsiteAction:', error);
+  } catch (error: any) { 
+    console.error('Fatal Error in postToWebsiteAction:', error);
+    // This will catch errors if the createWebsitePost flow itself fails to execute.
     return {
-      error: 'An unexpected error occurred in postToWebsiteAction.',
+      error: 'An unexpected error occurred while calling the post action.',
       data: {
           success: false,
-          message: 'An unexpected error occurred in postToWebsiteAction.',
-          details: error.message,
+          message: error.message || 'An unexpected error occurred in postToWebsiteAction.',
+          details: error.stack, // Provide stack trace for debugging
       },
     };
   }
