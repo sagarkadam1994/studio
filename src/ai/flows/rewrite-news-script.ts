@@ -87,41 +87,35 @@ const prompt = ai.definePrompt({
   name: 'rewriteNewsScriptPrompt',
   input: {schema: RewriteNewsScriptInputSchema},
   output: {schema: RewriteNewsScriptOutputSchema},
-  prompt: `You are a professional Marathi news editor and content strategist with years of experience in a fast-paced newsroom. Your goal is to take a raw news script and transform it into a complete, ready-to-publish content package for multiple platforms. The tone must be professional, engaging, and clear, as if written by a seasoned human journalist, not a generic AI.
+  prompt: `You are a professional Marathi news editor. Your goal is to transform a raw news script into a complete content package for multiple platforms.
 
-You will receive ONLY the original Marathi news script as input.
+IMPORTANT: Your entire response MUST be a single, valid JSON object that strictly adheres to the output schema. Do not include any text, markdown formatting, or explanations outside of the JSON object.
 
 Original Script: {{{originalScript}}}
 
-Your comprehensive task is to generate the following, ensuring all text sounds natural and human-like:
+Generate the following content based on the script:
 
-**1. Core Script Rewrite:**
-    *   **Rewrite the Script:**
-        *   Target a length of 150–200 Marathi words.
-        *   The style must be professional and clear for a news anchor to read. Avoid robotic or overly formal language.
-        *   Ensure perfect grammar and sentence structure.
-        *   Strictly adhere to content policies (no hate speech, abusive language, personal attacks).
-    *   **Extract Key Information:**
-        *   **प्रतिनिधी (Reporter Name):** Use this exact word. If a reporter's name isn't provided, leave this field blank.
-        *   **लोकेशन (Location):** Provide the location in a "City - District" format if possible. Infer it realistically from the script. If unknown, mark it as '[location inferred]'.
-        *   **Ticker Headlines:** Extract 4–5 key headlines. Each headline must be strictly 5–6 Marathi words.
-        *   **Word Count:** Accurately count the words in the final rewritten script.
+1.  **Core Script Rewrite:**
+    *   **rewrittenScript:** A professionally rewritten Marathi script (150–200 words) for a news anchor. Ensure perfect grammar and a natural, human-like tone.
+    *   **reporterName:** Extract the reporter's name. If not available, leave it blank.
+    *   **location:** The location in "City - District" format. If unknown, use '[location inferred]'.
+    *   **headlines:** An array of 4–5 key headlines, each strictly 5–6 Marathi words.
+    *   **wordCount:** The accurate word count of the final rewritten script.
 
-**2. YouTube Metadata:**
-    *   **YouTube Title:** Create a viral, click-worthy title in Marathi, around 100 characters.
-    *   **Thumbnail Text:** Write two short, attractive Marathi sentences to create curiosity.
-    *   **Description:** Write a well-structured, SEO-friendly YouTube description (300-450 words) with a conversational tone. Include a mix of Marathi and English keywords. The description must include calls to action (like, subscribe, comment). **Do not include any hashtags (#) in the description itself.**
-    *   **Tags:** Provide a list of relevant Marathi and English tags (single words or short phrases).
-    *   **Hashtags:** Provide a list of relevant hashtags, including some in English.
+2.  **YouTube Metadata (youtube object):**
+    *   **youtubeTitle:** A viral, click-worthy Marathi title (around 100 characters).
+    *   **thumbnailText:** Two short, attractive Marathi sentences for the thumbnail.
+    *   **description:** A 300-450 word SEO-friendly YouTube description with a mix of Marathi and English keywords and calls to action. Do not include hashtags here.
+    *   **tags:** An array of relevant Marathi and English tags.
+    *   **hashtags:** An array of relevant hashtags.
 
-**3. Website Article:**
-    *   **Title:** Write an SEO-friendly title in Marathi that is also engaging.
-    *   **Permalink:** Create a URL-friendly permalink (slug) from the title (English, lowercase, hyphenated).
-    *   **Article:** Write a detailed, SEO-friendly article (400-600 words). It should be primarily in Marathi but include relevant English keywords naturally. Write in a compelling, narrative style.
-    *   **Tags:** Provide a list of relevant tags for the article.
-    *   **Category:** Provide a relevant category for the article.
-    *   **Word Count:** Provide the total word count of the generated website article.
-`,
+3.  **Website Article (website object):**
+    *   **title:** An engaging, SEO-friendly title in Marathi.
+    *   **permalink:** A URL-friendly slug from the title (e.g., 'this-is-a-title').
+    *   **article:** A detailed, SEO-friendly article (400-600 words) in a narrative style, mixing Marathi and English keywords.
+    *   **tags:** An array of relevant tags for the article.
+    *   **category:** A relevant category for the article.
+    *   **wordCount:** The total word count of the article.`,
 });
 
 const rewriteNewsScriptFlow = ai.defineFlow(

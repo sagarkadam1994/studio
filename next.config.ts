@@ -18,13 +18,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-   webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Add node-fetch to externals to avoid bundling it in the server build
-      config.externals.push('node-fetch');
-    }
-    return config;
-  },
   experimental: {
     appDir: true,
   },
